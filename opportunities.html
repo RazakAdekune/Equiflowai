@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | Investment Opportunities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --accent:#ff3340;
+      --gold:#f5a623;
+      --green:#19c98a;
+      --dark:#070708;
+      --head:'Montserrat',sans-serif;
+    }
+
+    html,body{min-height:100%;background:var(--dark)}
+    body{color:#e2e4ed;font-family:'Inter',system-ui,sans-serif;overflow-x:hidden}
+
+    /* ── BG ── */
+    .bg-blob{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.22}
+    .blob-1{width:700px;height:700px;background:radial-gradient(circle,rgba(255,51,64,.18),transparent 70%);top:-200px;left:-200px}
+    .blob-2{width:500px;height:500px;background:radial-gradient(circle,rgba(245,166,35,.1),transparent 70%);bottom:0;right:-100px}
+    .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:48px 48px}
+
+    /* ── Topbar ── */
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      background:rgba(7,7,8,.85);backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      padding:0 32px;height:58px;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .brand{font-family:'Montserrat',sans-serif;font-weight:900;letter-spacing:.18em;font-size:14px;color:#fff}
+    .brand span{color:var(--accent)}
+    .user-pill{display:flex;align-items:center;gap:10px}
+    .user-av{width:30px;height:30px;border-radius:50%;background:rgba(255,51,64,.12);border:1px solid rgba(255,51,64,.28);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent);font-family:'Montserrat',sans-serif}
+    .user-name{font-size:13px;color:#9ca3af;font-weight:500}
+
+    /* ── Page wrap ── */
+    .page{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:44px 24px 80px}
+
+    /* ── Hero ── */
+    .hero{margin-bottom:48px}
+    .hero-ey{display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:999px;background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.2);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+    .hero-ey .ldot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.4s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+    .hero h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:12px}
+    .hero h1 em{font-style:normal;color:var(--accent)}
+    .hero p{color:#6b7280;font-size:14.5px;line-height:1.7;max-width:540px}
+
+    /* ── Cards grid ── */
+    .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+    @media(max-width:960px){.cards-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.cards-grid{grid-template-columns:1fr}}
+
+    /* ── Feature card (exact copy of .fc from index.html) ── */
+    .fc{
+      background:#111114;border:1px solid rgba(255,255,255,.09);
+      border-radius:20px;overflow:hidden;
+      display:flex;flex-direction:column;
+      transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1),border-color .25s;
+      will-change:transform;
+      opacity:0;transform:translateY(20px);
+      animation:fadeUp .55s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    @keyframes fadeUp{to{opacity:1;transform:none}}
+    .fc:hover{border-color:rgba(255,255,255,.2);transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1)}
+    .fc .thumb{height:220px;position:relative;background-size:cover;background-position:center;transition:transform .6s cubic-bezier(.22,1,.36,1)}
+    .fc:hover .thumb{transform:scale(1.04)}
+    .fc .thumb-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.55) 100%)}
+    .fc .thumb-pills{position:absolute;inset:16px 16px auto 16px;display:flex;justify-content:space-between;align-items:flex-start}
+
+    .cat-pill{font-family:'Montserrat',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:7px 13px;border-radius:30px}
+    .cp1{background:var(--gold);color:#000}
+    .cp2{background:#1a1635;color:#8b9bff;border:1px solid rgba(139,155,255,.5)}
+    .cp3{background:var(--accent);color:#fff}
+    .cp4{background:#0d2b1f;color:#19c98a;border:1px solid rgba(25,201,138,.4)}
+    .cp5{background:#1e1128;color:#c084fc;border:1px solid rgba(192,132,252,.4)}
+    .cp6{background:#0c1f36;color:#60a5fa;border:1px solid rgba(96,165,250,.4)}
+
+    .live-pill{font-family:'Montserrat',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.1em;color:#fff;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:30px;background:rgba(10,40,28,.85);border:1px solid rgba(25,201,138,.55)}
+    .live-pill .ldot2{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.4s ease-in-out infinite}
+
+    .fc .body{padding:26px 24px 24px;display:flex;flex-direction:column;flex:1}
+    .fc h3{font-family:'Montserrat',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:8px;line-height:1.25}
+    .fc .desc{color:#7a7a80;font-size:13.5px;line-height:1.55;margin-bottom:22px}
+
+    .fc .stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.07);padding-top:18px;margin-bottom:18px}
+    .fc .stat{padding-right:14px}
+    .fc .stat+.stat{padding-left:14px;border-left:1px solid rgba(255,255,255,.07)}
+    .fc .stat .sv{font-family:'Montserrat',sans-serif;font-weight:800;font-size:18px;color:#fff;line-height:1.1}
+    .fc .stat .sk{font-size:10px;letter-spacing:.13em;color:#5a5a60;text-transform:uppercase;margin-top:5px}
+    .sv.y1{color:var(--gold)} .sv.y2{color:#8b9bff} .sv.y3{color:var(--accent)}
+    .sv.y4{color:#19c98a}     .sv.y5{color:#c084fc} .sv.y6{color:#60a5fa}
+
+    .fc .prog{margin-bottom:20px}
+    .fc .prog-meta{display:flex;justify-content:space-between;font-size:11.5px;color:#5a5a60;margin-bottom:7px}
+    .fc .prog-track{height:4px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+    .fc .prog-fill{height:100%;border-radius:4px}
+    .pf1{width:18%;background:var(--gold)}   .pf2{width:43%;background:#8b9bff}  .pf3{width:46%;background:var(--accent)}
+    .pf4{width:12%;background:#19c98a}       .pf5{width:31%;background:#c084fc} .pf6{width:62%;background:#60a5fa}
+
+    .fc .cta-row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding-top:18px}
+    .fc .cta-row .view{font-size:12.5px;color:#5a5a60}
+    .fc .invest-btn{font-family:'Montserrat',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.07em;display:inline-flex;align-items:center;gap:5px;cursor:pointer;transition:opacity .15s}
+    .fc .invest-btn:hover{opacity:.72}
+    .ib1{color:var(--gold)} .ib2{color:#8b9bff} .ib3{color:var(--accent)}
+
+    /* Animation delays */
+    .fc:nth-child(1){animation-delay:.05s}
+    .fc:nth-child(2){animation-delay:.12s}
+    .fc:nth-child(3){animation-delay:.19s}
+    .fc:nth-child(4){animation-delay:.26s}
+    .fc:nth-child(5){animation-delay:.33s}
+    .fc:nth-child(6){animation-delay:.40s}
+
+    /* ── Invest modal ── */
+    #inv-overlay{
+      display:none;position:fixed;inset:0;z-index:300;
+      background:rgba(0,0,0,.88);backdrop-filter:blur(16px);
+      align-items:center;justify-content:center;padding:20px;
+    }
+    #inv-overlay.show{display:flex;animation:fadeIn .25s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    #inv-box{
+      background:#0d0d0f;border:1px solid rgba(255,255,255,.1);
+      border-radius:22px;padding:36px 32px;width:100%;max-width:460px;
+      animation:cardIn .35s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes cardIn{from{transform:translateY(20px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+
+    .im-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:6px}
+    .im-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:20px;line-height:1.2;color:#fff;margin-bottom:22px}
+    .im-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+    .im-stat{padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+    .im-stat .lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:4px}
+    .im-stat .val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:16px}
+    .im-field{margin-bottom:14px}
+    .im-field label{display:block;font-size:11px;font-weight:600;color:#6b7280;margin-bottom:7px}
+    .im-input{width:100%;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#e2e4ed;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s}
+    .im-input:focus{border-color:var(--accent)}
+    .im-est{padding:12px 14px;border-radius:10px;background:rgba(255,51,64,.06);border:1px solid rgba(255,51,64,.15);font-family:'Montserrat',sans-serif;font-weight:900;font-size:17px;color:var(--accent);margin-bottom:16px}
+    .im-note{padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:20px}
+    .im-btn{width:100%;padding:14px;border:none;border-radius:11px;background:var(--accent);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(255,51,64,.35);transition:opacity .15s}
+    .im-btn:hover{opacity:.88}
+    .im-close{position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:#6b7280;font-size:24px;padding:4px;transition:color .15s;line-height:1}
+    .im-close:hover{color:#fff}
+    .im-header{position:relative;padding-right:28px;margin-bottom:22px}
+
+    /* success */
+    .im-success{text-align:center;padding:8px 0}
+    .im-success-icon{width:64px;height:64px;border-radius:18px;background:rgba(25,201,138,.1);border:1px solid rgba(25,201,138,.25);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+    .im-success h3{font-family:'Montserrat',sans-serif;font-weight:900;font-size:20px;color:#fff;margin-bottom:10px}
+    .im-success p{font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:24px}
+    .im-success-btn{padding:12px 28px;border-radius:11px;background:var(--green);color:#000;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif}
+
+    @media(max-width:600px){
+      .topbar{padding:0 16px}
+      .page{padding:28px 14px 80px}
+      #inv-box{padding:28px 20px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blob"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<div class="bg-grid"></div>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="brand">EQUI<span>FLOW</span></div>
+  <div class="user-pill">
+    <div class="user-av" id="user-av">E</div>
+    <span class="user-name" id="user-name-top">Investor</span>
+  </div>
+</header>
+
+<!-- Page -->
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-ey"><span class="ldot"></span> Live Now</div>
+    <h1>Featured <em>Opportunities</em></h1>
+    <p>Every deal below is open for investment now. Select one, enter your amount, and your account manager will send deposit instructions within 24 hours.</p>
+  </div>
+
+  <!-- Cards — exact same 6 as index.html featured section -->
+  <div class="cards-grid">
+
+    <!-- CARD 1 — Robotaxi -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/robotaxi.jpg')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp1">Robotaxi</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>The Next Trillion-Dollar Shift</h3>
+        <div class="desc">The future of transportation is autonomous. Discover the investment opportunities driving it.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y1">40%–120%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$1,000</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">412</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$9M raised</span><span>18% of $50M</span></div>
+          <div class="prog-track"><div class="prog-fill pf1"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib1" onclick="openInvest('The Next Trillion-Dollar Shift','40%–120%',1000,'Robotaxi')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2 — xAI -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/Xai.jpg')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp2">xAI</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>xAI Colossus II — 1M GPU Cluster</h3>
+        <div class="desc">Back the infrastructure powering the world's most powerful AI.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y2">28%–90%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$4,000</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">289</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$128M raised</span><span>43% of $300M</span></div>
+          <div class="prog-track"><div class="prog-fill pf2"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib2" onclick="openInvest('xAI Colossus II — 1M GPU Cluster','28%–90%',4000,'xAI')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3 — Tesla -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/factory.jpg')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp3">TESLA</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>Gigafactory Mexico — Phase 1</h3>
+        <div class="desc">Fund the next generation of affordable Tesla vehicles.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y3">18%–45%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$2,500</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">541</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$92M raised</span><span>46% of $200M</span></div>
+          <div class="prog-track"><div class="prog-fill pf3"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib3" onclick="openInvest('Gigafactory Mexico — Phase 1','18%–45%',2500,'Tesla')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4 — Optimus -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/optimus robot.png')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp4">OPTIMUS</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>Optimus Gen-3 — Labor Revolution</h3>
+        <div class="desc">Back the humanoid robot redefining manufacturing, logistics, and service industries worldwide.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y4">35%–80%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$1,500</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">178</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$24M raised</span><span>12% of $200M</span></div>
+          <div class="prog-track"><div class="prog-fill pf4"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib1" onclick="openInvest('Optimus Gen-3 — Labor Revolution','35%–80%',1500,'Optimus')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 5 — Neuralink -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/neural link.png')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp5">NEURALINK</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>Neuralink N1 — Human-AI Interface</h3>
+        <div class="desc">Invest in the technology merging human cognition with machine intelligence at clinical scale.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y5">50%–140%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$2,000</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">203</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$47M raised</span><span>31% of $150M</span></div>
+          <div class="prog-track"><div class="prog-fill pf5"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib2" onclick="openInvest('Neuralink N1 — Human-AI Interface','50%–140%',2000,'Neuralink')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 6 — SpaceX -->
+    <div class="fc">
+      <div class="thumb" style="background-image:url('images/rocket.png')">
+        <div class="thumb-veil"></div>
+        <div class="thumb-pills">
+          <span class="cat-pill cp6">SPACEX</span>
+          <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+        </div>
+      </div>
+      <div class="body">
+        <h3>SpaceX Starlink — Phase 4 Expansion</h3>
+        <div class="desc">Fund the satellite constellation delivering high-speed internet across 100+ countries.</div>
+        <div class="stats">
+          <div class="stat"><div class="sv y6">22%–60%</div><div class="sk">Yield</div></div>
+          <div class="stat"><div class="sv">$3,500</div><div class="sk">Min</div></div>
+          <div class="stat"><div class="sv">334</div><div class="sk">Investors</div></div>
+        </div>
+        <div class="prog">
+          <div class="prog-meta"><span>$310M raised</span><span>62% of $500M</span></div>
+          <div class="prog-track"><div class="prog-fill pf6"></div></div>
+        </div>
+        <div class="cta-row">
+          <span class="view">View investment details</span>
+          <span class="invest-btn ib3" onclick="openInvest('SpaceX Starlink — Phase 4 Expansion','22%–60%',3500,'SpaceX')">INVEST NOW &rsaquo;</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cards-grid -->
+</div><!-- /page -->
+
+<!-- Invest modal -->
+<div id="inv-overlay" onclick="if(event.target===this)closeInvest()">
+  <div id="inv-box"><!-- filled by JS --></div>
+</div>
+
+<script>
+  /* session guard */
+  if (!localStorage.getItem('ef_current_user')) { window.location.href = 'index.html'; }
+
+  /* personalise topbar */
+  var userName = localStorage.getItem('ef_current_name') || 'Investor';
+  document.getElementById('user-name-top').textContent = userName.split(' ')[0];
+  document.getElementById('user-av').textContent = userName.charAt(0).toUpperCase();
+
+  var _opp = null;
+
+  function openInvest(name, yld, min, cat) {
+    _opp = { name:name, yld:yld, min:min, cat:cat };
+    var yieldColor = {Robotaxi:'#f5a623', xAI:'#8b9bff', Tesla:'#ff3340', Optimus:'#19c98a', Neuralink:'#c084fc', SpaceX:'#60a5fa'};
+    var c = yieldColor[cat] || '#ff3340';
+    document.getElementById('inv-box').innerHTML =
+      '<div class="im-header">'
+        + '<div class="im-label">'+cat+'</div>'
+        + '<div class="im-title">'+name+'</div>'
+        + '<button class="im-close" onclick="closeInvest()">×</button>'
+      + '</div>'
+      + '<div class="im-grid">'
+        + '<div class="im-stat"><div class="lbl">Yield</div><div class="val" style="color:'+c+'">'+yld+'</div></div>'
+        + '<div class="im-stat"><div class="lbl">Min Entry</div><div class="val">$'+min.toLocaleString()+'</div></div>'
+      + '</div>'
+      + '<div class="im-field"><label>Investment Amount (USD)</label>'
+        + '<input class="im-input" id="inv-amt" type="number" min="'+min+'" placeholder="Min $'+min.toLocaleString()+'" oninput="calcReturn('+min+',\''+c+'\')">'
+      + '</div>'
+      + '<div class="im-est" id="inv-est" style="color:'+c+'">Enter amount above</div>'
+      + '<div class="im-note"><strong style="color:'+c+'">Next step:</strong> Confirm your amount below and you\'ll be taken to the payment page to complete your deposit.</div>'
+      + '<button class="im-btn" style="background:'+c+';color:'+(cat==='Robotaxi'||cat==='Optimus'?'#000':'#fff')+';box-shadow:0 4px 18px '+c+'44" onclick="submitInterest()">Confirm Interest →</button>';
+
+    document.getElementById('inv-overlay').classList.add('show');
+    setTimeout(function(){ var el=document.getElementById('inv-amt'); if(el) el.focus(); }, 100);
+  }
+
+  function calcReturn(min, color) {
+    var amt = parseFloat(document.getElementById('inv-amt').value || 0);
+    var el  = document.getElementById('inv-est');
+    if (!el) return;
+    if (amt >= min) {
+      /* use mid-range of the yield as estimate */
+      var low  = +(amt * 0.18).toFixed(2);
+      var high = +(amt * 0.40).toFixed(2);
+      el.textContent = 'Est. return: $'+low.toLocaleString()+' – $'+high.toLocaleString()+' / 2 days';
+      el.style.color = color;
+    } else {
+      el.textContent = amt > 0 ? 'Minimum is $'+min.toLocaleString() : 'Enter amount above';
+      el.style.color = amt > 0 ? '#9ca3af' : color;
+    }
+  }
+
+  async function submitInterest() {
+    if (!_opp) return;
+    var amt = parseFloat(document.getElementById('inv-amt').value || 0);
+    if (amt < _opp.min) {
+      var inp = document.getElementById('inv-amt');
+      inp.style.borderColor = '#ff3340';
+      inp.focus();
+      return;
+    }
+    /* save pending deposit and redirect */
+    try {
+      localStorage.setItem('ef_pending_deposit', JSON.stringify({
+        plan: _opp.name,
+        amount: amt,
+        type: 'opportunity'
+      }));
+    } catch(e) {}
+    var uid = localStorage.getItem('ef_current_user');
+    if (uid) { await dbAddOppInterest(uid, _opp.name); }
+    window.location.href = 'deposit.html';
+  }
+
+  function closeInvest() {
+    document.getElementById('inv-overlay').classList.remove('show');
+    _opp = null;
+  }
+
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeInvest(); });
+
+  /* ── FOMO WIDGET ── */
+  (function(){
+    var NAMES = [
+      'Tyler M.','Ashley R.','Brandon K.','Jessica L.','Chad W.','Brittany H.',
+      'Kyle T.','Megan S.','Travis B.','Kayla N.','Cody J.','Amber G.',
+      'Derek F.','Tiffany C.','Justin P.','Stephanie D.','Blake A.','Lindsay O.',
+      'Garrett E.','Samantha V.','Ryan Q.','Heather Z.','Connor I.','Chelsea U.'
+    ];
+
+    var DEALS = [
+      { name:'Robotaxi',    label:'The Next Trillion-Dollar Shift', min:1000,  max:8000  },
+      { name:'xAI',         label:'xAI Colossus II',                min:4000,  max:25000 },
+      { name:'Tesla',       label:'Gigafactory Mexico — Phase 1',   min:2500,  max:15000 },
+      { name:'Optimus',     label:'Optimus Gen-3',                  min:1500,  max:10000 },
+      { name:'Neuralink',   label:'Neuralink N1',                   min:2000,  max:12000 },
+      { name:'SpaceX',      label:'SpaceX Starlink Phase 4',        min:3500,  max:20000 }
+    ];
+
+    var ACTIONS = ['invested', 'invested', 'invested', 'withdrew']; /* 3:1 invest vs withdraw */
+
+    function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function randFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    /* Round to a realistic-looking number */
+    function niceAmt(min, max){
+      var raw = rand(min, max);
+      /* round to nearest 500 if >=2000, else nearest 100 */
+      var step = raw >= 2000 ? 500 : 100;
+      return Math.round(raw/step)*step;
+    }
+
+    function minsAgo(){ return rand(1,9)+' min ago'; }
+
+    /* Build the box HTML */
+    function buildFomo(){
+      var name   = randFrom(NAMES);
+      var deal   = randFrom(DEALS);
+      var action = randFrom(ACTIONS);
+      var amt    = niceAmt(deal.min, deal.max).toLocaleString();
+      var icon   = action === 'invested' ? '💰' : '💸';
+      var color  = action === 'invested' ? '#19c98a' : '#ff3340';
+      var verb   = action === 'invested' ? 'invested' : 'withdrew';
+
+      return '<div style="display:flex;align-items:center;gap:12px">'
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:12.5px;font-weight:700;color:#e2e4ed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:#fff">'+name+'</span> '+verb+' <span style="color:'+color+';font-family:Montserrat,sans-serif;font-weight:800">$'+amt+'</span></div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+deal.label+'</div>'
+        + '</div>'
+        + '<div style="font-size:10px;color:#4b5563;flex-shrink:0">'+minsAgo()+'</div>'
+        + '</div>';
+    }
+
+    /* Create the element once */
+    var box = document.createElement('div');
+    box.id  = 'fomo-box';
+    box.style.cssText = [
+      'position:fixed','top:72px','right:20px','z-index:400',
+      'background:#111114','border:1px solid rgba(255,255,255,.1)',
+      'border-radius:14px','padding:14px 16px','width:310px',
+      'box-shadow:0 12px 40px rgba(0,0,0,.6)',
+      'transform:translateX(340px)','transition:transform .45s cubic-bezier(.22,1,.36,1)',
+      'cursor:default','user-select:none'
+    ].join(';');
+    document.body.appendChild(box);
+
+    function show(){
+      box.innerHTML = buildFomo();
+      box.style.transform = 'translateX(0)';
+      setTimeout(hide, 4000);
+    }
+    function hide(){
+      box.style.transform = 'translateX(340px)';
+    }
+
+    setTimeout(function(){
+      show();
+      setInterval(show, 12000);
+    }, 4000);
+  })();
+</script>
+</body>
+</html>

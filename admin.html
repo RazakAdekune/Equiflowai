@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:999px}
+    :root{--red:#ff3340;--green:#19c98a;--gold:#f5a623;--dark:#080809;--card:#0d0d0f;--card2:#111114;--border:rgba(255,255,255,.07)}
+    body{background:var(--dark);color:#e2e4ed;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px}
+    .card-inner{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px}
+    .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+    .pill-green{background:rgba(25,201,138,.1);color:#19c98a;border:1px solid rgba(25,201,138,.2)}
+    .pill-gold {background:rgba(245,166,35,.1);color:#f5a623;border:1px solid rgba(245,166,35,.2)}
+    .pill-red  {background:rgba(255,51,64,.1); color:#ff3340;border:1px solid rgba(255,51,64,.2)}
+    .pill-blue {background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2)}
+    .pill-gray {background:rgba(255,255,255,.06);color:#9ca3af;border:1px solid rgba(255,255,255,.1)}
+    .pill-dot  {width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.6s ease-in-out infinite}
+    @keyframes blink  {0%,100%{opacity:1}50%{opacity:.2}}
+    @keyframes fadeIn {from{opacity:0}to{opacity:1}}
+    @keyframes slideU {from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes spin   {to{transform:rotate(360deg)}}
+    @keyframes rowNew {0%{background:rgba(255,51,64,.1)}100%{background:transparent}}
+    .input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:9px 12px;color:#e2e4ed;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+    .input:focus{border-color:var(--red)}
+    .input::placeholder{color:#4b5563}
+    select.input{cursor:pointer}
+    .btn{cursor:pointer;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:12px;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .btn:active{transform:scale(.97)}
+    .btn-primary{background:var(--red);color:#fff;border-radius:10px;padding:8px 16px;box-shadow:0 4px 14px rgba(255,51,64,.25)}
+    .btn-primary:hover{opacity:.88}
+    .btn-success{background:rgba(25,201,138,.12);color:#19c98a;border:1px solid rgba(25,201,138,.22);border-radius:9px;padding:7px 13px}
+    .btn-success:hover{background:rgba(25,201,138,.22)}
+    .btn-danger {background:rgba(255,51,64,.1); color:#ff3340;border:1px solid rgba(255,51,64,.2); border-radius:9px;padding:7px 13px}
+    .btn-danger:hover {background:rgba(255,51,64,.2)}
+    .btn-ghost  {background:rgba(255,255,255,.05);color:#9ca3af;border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:7px 13px}
+    .btn-ghost:hover  {background:rgba(255,255,255,.08);color:#e2e4ed}
+    .sb{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7280;transition:all .15s;white-space:nowrap}
+    .sb:hover {background:rgba(255,255,255,.05);color:#e2e4ed}
+    .sb.active{background:rgba(255,51,64,.1);color:#ff8088;font-weight:600}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;padding:9px 14px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid var(--border)}
+    td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.02)}
+    .num{font-variant-numeric:tabular-nums}
+    .overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px}
+    .overlay.open{display:flex;animation:fadeIn .18s ease}
+    .modal-box{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;animation:slideU .25s cubic-bezier(.16,1,.3,1)}
+    #login-screen{position:fixed;inset:0;z-index:300;background:var(--dark);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .25s ease}
+    #login-screen.hidden{display:none}
+    #app{display:none}
+    #app.visible{display:flex;min-height:100vh}
+    #toast{position:fixed;bottom:20px;right:20px;z-index:400;display:none}
+    #toast.show{display:flex;animation:slideU .25s ease}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+    /* Mobile sidebar */
+    .sb-overlay{display:none;position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+    .sb-overlay.open{display:block}
+    #hamburger{display:none}
+    @media(max-width:767px){
+      #sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;transform:translateX(-100%);transition:transform .28s cubic-bezier(.16,1,.3,1)}
+      #sidebar.open{transform:translateX(0)}
+      #hamburger{display:flex}
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast">
+  <div id="toast-inner" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-2xl card">
+    <span id="t-icon"></span><span id="t-msg"></span>
+  </div>
+</div>
+
+<!-- SIDEBAR MOBILE OVERLAY -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- ════ LOGIN ════ -->
+<div id="login-screen">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--red)">
+        <i data-lucide="shield" class="w-6 h-6 text-white"></i>
+      </div>
+      <h1 class="text-xl font-bold" style="font-family:'Montserrat',sans-serif;letter-spacing:.05em">EQUIFLOW</h1>
+      <p class="text-xs text-gray-500 mt-1">Admin Operations Centre</p>
+    </div>
+    <div class="card p-6">
+      <div id="login-err" class="hidden text-xs text-red-400 rounded-lg px-3 py-2.5 mb-4" style="background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.2)">Incorrect username or password.</div>
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="text-xs font-medium text-gray-500 block mb-1.5">Username</label>
+          <input class="input" id="li-u" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')document.getElementById('li-p').focus()">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 block mb-1.5">Password</label>
+          <input class="input" id="li-p" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+      </div>
+      <button onclick="doLogin()" class="btn btn-primary w-full py-2.5 text-sm" style="border-radius:12px">Sign In →</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div id="dep-modal" class="overlay">
+  <div class="modal-box p-6">
+    <div class="flex justify-between items-start mb-5">
+      <div>
+        <h3 id="dep-modal-title" class="text-base font-bold">Deposit Review</h3>
+        <p id="dep-modal-id" class="text-xs text-gray-500 mt-0.5 font-mono"></p>
+      </div>
+      <button onclick="closeModal('dep-modal')" class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white" style="background:rgba(255,255,255,.05)">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+    <div id="dep-modal-body" class="mb-4"></div>
+    <div class="mb-4">
+      <label class="text-xs font-medium text-gray-500 block mb-1.5">Admin Note</label>
+      <textarea class="input" id="dep-note" rows="2" placeholder="Optional note…" style="resize:none"></textarea>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <button id="dep-approve-btn" onclick="processDeposit('ACTIVE')" class="btn btn-success py-2.5 text-sm">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>Approve
+      </button>
+      <button id="dep-reject-btn" onclick="processDeposit('REJECTED')" class="btn btn-danger py-2.5 text-sm">
+        <i data-lucide="x-circle" class="w-4 h-4"></i>Reject
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAWAL MODAL -->
+<div id="wd-modal" class="overlay">
+  <div class="modal-box p-6">
+    <div class="flex justify-between items-start mb-5">
+      <div>
+        <h3 class="text-base font-bold">Withdrawal Review</h3>
+        <p id="wd-modal-id" class="text-xs text-gray-500 mt-0.5 font-mono"></p>
+      </div>
+      <button onclick="closeModal('wd-modal')" class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white" style="background:rgba(255,255,255,.05)">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+    <div id="wd-modal-body" class="mb-5"></div>
+    <div class="mb-4">
+      <label class="text-xs font-medium text-gray-500 block mb-1.5">Note (optional)</label>
+      <textarea class="input" id="wd-note" rows="2" placeholder="e.g. TxID: abc123…" style="resize:none"></textarea>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <button id="wd-pay-btn" onclick="processWithdrawal('PAID')" class="btn btn-success py-2.5 text-sm">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>Mark Paid
+      </button>
+      <button id="wd-reject-btn" onclick="processWithdrawal('REJECTED')" class="btn btn-danger py-2.5 text-sm">
+        <i data-lucide="x-circle" class="w-4 h-4"></i>Reject
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ APP SHELL ════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="w-52 shrink-0 border-r flex flex-col" style="background:#070809;border-color:rgba(255,255,255,.06);min-height:100vh">
+    <div class="flex items-center gap-2.5 px-4 h-14 border-b" style="border-color:rgba(255,255,255,.06)">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:var(--red)">
+        <i data-lucide="shield" class="w-3.5 h-3.5 text-white"></i>
+      </div>
+      <div>
+        <p class="text-sm font-bold leading-none" style="font-family:'Montserrat',sans-serif;letter-spacing:.08em">EQUIFLOW</p>
+        <p class="mt-0.5" style="font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--red)">ADMIN</p>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-0.5">
+      <div class="sb active" id="nav-overview"    onclick="show('overview',this)">   <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>Overview</div>
+      <div class="sb"        id="nav-waitlist"     onclick="show('waitlist',this)">    <i data-lucide="mail"              class="w-4 h-4 shrink-0"></i><span class="flex-1">Waitlist</span><span id="wl-badge" class="hidden pill pill-blue" style="font-size:9px">0</span></div>
+      <div class="sb"        id="nav-users"        onclick="show('users',this)">       <i data-lucide="user-check"        class="w-4 h-4 shrink-0"></i><span class="flex-1">Users</span></div>
+      <div class="sb"        id="nav-deposits"     onclick="show('deposits',this)">    <i data-lucide="credit-card"       class="w-4 h-4 shrink-0"></i><span class="flex-1">Deposits</span><span id="dep-badge" class="hidden pill pill-gold" style="font-size:9px">0</span></div>
+      <div class="sb"        id="nav-withdrawals"  onclick="show('withdrawals',this)"> <i data-lucide="send"              class="w-4 h-4 shrink-0"></i><span class="flex-1">Withdrawals</span><span id="wd-badge" class="hidden pill pill-red" style="font-size:9px">0</span></div>
+      <div class="sb"        id="nav-activity"     onclick="show('activity',this)">    <i data-lucide="activity"          class="w-4 h-4 shrink-0"></i>Activity Log</div>
+      <div class="sb"        id="nav-settings"     onclick="show('settings',this)">    <i data-lucide="settings"          class="w-4 h-4 shrink-0"></i>Settings</div>
+    </nav>
+    <div class="p-3 border-t" style="border-color:rgba(255,255,255,.06)">
+      <button onclick="doLogout()" class="sb w-full" style="color:#f87171">
+        <i data-lucide="log-out" class="w-4 h-4 shrink-0" style="color:#f87171"></i>Log Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-14 border-b flex items-center justify-between px-4 md:px-5 shrink-0" style="background:#070809;border-color:rgba(255,255,255,.06)">
+      <div class="flex items-center gap-2.5">
+        <button id="hamburger" class="w-8 h-8 items-center justify-center rounded-lg mr-1 shrink-0" style="background:rgba(255,255,255,.05);color:#9ca3af;border:none;cursor:pointer" onclick="openSidebar()">
+          <i data-lucide="menu" class="w-4 h-4"></i>
+        </button>
+        <span class="w-2 h-2 rounded-full shrink-0" style="background:var(--green);box-shadow:0 0 6px rgba(25,201,138,.6);animation:blink 1.6s ease-in-out infinite"></span>
+        <span id="sec-title" class="text-sm font-semibold">Overview</span>
+      </div>
+      <div class="flex items-center gap-2 md:gap-3">
+        <span id="clock" class="text-xs text-gray-600 hidden sm:block"></span>
+        <button onclick="refreshAll()" class="btn btn-ghost py-1.5 px-2 md:px-3 text-xs">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-5 space-y-5">
+
+      <!-- ── OVERVIEW ── -->
+      <section id="sec-overview">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="stat-card">
+            <div class="flex justify-between mb-2"><p class="text-xs text-gray-500">Registered</p><i data-lucide="users" class="w-4 h-4 opacity-60" style="color:var(--red)"></i></div>
+            <p id="ov-users" class="num text-2xl font-bold">0</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex justify-between mb-2"><p class="text-xs text-gray-500">Active</p><i data-lucide="trending-up" class="w-4 h-4 opacity-60" style="color:var(--green)"></i></div>
+            <p id="ov-active" class="num text-2xl font-bold" style="color:var(--green)">0</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex justify-between mb-2"><p class="text-xs text-gray-500">Pending</p><i data-lucide="clock" class="w-4 h-4 opacity-60" style="color:var(--gold)"></i></div>
+            <p id="ov-pending" class="num text-2xl font-bold" style="color:var(--gold)">0</p>
+          </div>
+          <div class="stat-card">
+            <div class="flex justify-between mb-2"><p class="text-xs text-gray-500">Total Volume</p><i data-lucide="dollar-sign" class="w-4 h-4 opacity-60" style="color:var(--green)"></i></div>
+            <p id="ov-volume" class="num text-2xl font-bold">$0</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="card overflow-hidden">
+            <div class="px-4 py-3 flex items-center justify-between border-b" style="border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.02)">
+              <div class="flex items-center gap-2"><i data-lucide="credit-card" class="w-4 h-4" style="color:var(--gold)"></i><span class="text-sm font-semibold">Pending Deposits</span></div>
+              <button class="btn btn-ghost py-1 px-2 text-xs" onclick="show('deposits',null)">View All</button>
+            </div>
+            <div id="ov-dep-list"></div>
+          </div>
+          <div class="card overflow-hidden">
+            <div class="px-4 py-3 flex items-center justify-between border-b" style="border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.02)">
+              <div class="flex items-center gap-2"><i data-lucide="send" class="w-4 h-4" style="color:var(--red)"></i><span class="text-sm font-semibold">Pending Withdrawals</span></div>
+              <button class="btn btn-ghost py-1 px-2 text-xs" onclick="show('withdrawals',null)">View All</button>
+            </div>
+            <div id="ov-wd-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── USERS ── -->
+      <section id="sec-users" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div><h2 class="text-base font-bold">Registered Users</h2><p class="text-xs text-gray-500 mt-0.5">All accounts on the platform</p></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table><thead><tr>
+              <th>Name</th><th>Email</th><th>Tier</th><th>Deposit</th><th>Status</th><th>Joined</th>
+            </tr></thead>
+            <tbody id="users-tbody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── DEPOSITS ── -->
+      <section id="sec-deposits" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div><h2 class="text-base font-bold">Deposit Management</h2><p class="text-xs text-gray-500 mt-0.5">Review and approve capital deposits</p></div>
+          <select class="input text-xs py-2 px-3" id="dep-filter" onchange="renderDeposits()" style="width:140px">
+            <option value="all">All Status</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="ACTIVE">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table><thead><tr>
+              <th>User</th><th>Tier</th><th>Amount</th><th>Method</th><th>Submitted</th><th>Status</th><th>Action</th>
+            </tr></thead>
+            <tbody id="dep-tbody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── WITHDRAWALS ── -->
+      <section id="sec-withdrawals" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div><h2 class="text-base font-bold">Withdrawal Requests</h2><p class="text-xs text-gray-500 mt-0.5">Approve payouts to user wallets</p></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table><thead><tr>
+              <th>User</th><th>Amount</th><th>Wallet</th><th>Requested</th><th>Status</th><th>Note</th><th>Action</th>
+            </tr></thead>
+            <tbody id="wd-tbody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ACTIVITY ── -->
+      <section id="sec-activity" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold">Activity Log</h2>
+          <button onclick="clearLog()" class="btn btn-ghost py-2 px-3 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Clear</button>
+        </div>
+        <div class="card p-4" id="log-list"></div>
+      </section>
+
+      <!-- ── WAITLIST ── -->
+      <section id="sec-waitlist" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div><h2 class="text-base font-bold">Waitlist</h2><p class="text-xs text-gray-500 mt-0.5">Generate invite links for prospective investors</p></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table><thead><tr>
+              <th>Email</th><th>Status</th><th>Referred By</th><th>Joined</th><th>Invite Code</th><th>Action</th>
+            </tr></thead>
+            <tbody id="wl-tbody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS ── -->
+      <section id="sec-settings" class="hidden">
+        <h2 class="text-base font-bold mb-4">Settings & Tools</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="card p-5">
+            <h3 class="text-sm font-semibold mb-1">Data Tools</h3>
+            <p class="text-xs text-gray-500 mb-4">Manage platform data for EquiFlow.</p>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="seedDemo()" class="btn btn-ghost py-2 px-3 text-xs"><i data-lucide="database" class="w-3.5 h-3.5"></i>Seed Demo User</button>
+              <button onclick="clearAll()" class="btn btn-danger py-2 px-3 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Clear All Data</button>
+            </div>
+          </div>
+          <div class="card p-5">
+            <h3 class="text-sm font-semibold mb-1">Quick Links</h3>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <a href="index.html"       target="_blank" class="btn btn-ghost py-2 px-3 text-xs"><i data-lucide="globe" class="w-3.5 h-3.5"></i>Login</a>
+              <a href="choose-plan.html" target="_blank" class="btn btn-ghost py-2 px-3 text-xs"><i data-lucide="layers" class="w-3.5 h-3.5"></i>Choose Plan</a>
+              <a href="dashboard.html"   target="_blank" class="btn btn-ghost py-2 px-3 text-xs"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>Dashboard</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════ CONSTANTS ════ */
+var ADMIN_USER = 'admin';
+var ADMIN_PASS = 'equiflow2025';
+
+/* ════ HELPERS — must be defined before boot code runs ════ */
+var icons = function() { try { lucide.createIcons(); } catch(e){} };
+var $     = function(id) { return document.getElementById(id); };
+var fmt   = function(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}); };
+var fmtD  = function(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+};
+var ago   = function(iso) {
+  if (!iso) return '—';
+  var s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 60)    return 'just now';
+  if (s < 3600)  return Math.floor(s/60)    + 'm ago';
+  if (s < 86400) return Math.floor(s/3600)  + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+};
+var esc = function(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+};
+
+/* ════ BOOT ════ */
+if (sessionStorage.getItem('ef_admin_auth') === '1') {
+  showPanel();
+} else {
+  document.getElementById('li-u').focus();
+}
+
+/* ════ AUTH ════ */
+function doLogin() {
+  var u   = (document.getElementById('li-u').value || '').trim();
+  var p   = document.getElementById('li-p').value || '';
+  var btn = document.querySelector('#login-screen .btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+  setTimeout(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In →'; }
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+      sessionStorage.setItem('ef_admin_auth', '1');
+      document.getElementById('login-err').classList.add('hidden');
+      showPanel();
+    } else {
+      document.getElementById('login-err').classList.remove('hidden');
+      document.getElementById('li-p').value = '';
+      setTimeout(function() { document.getElementById('login-err').classList.add('hidden'); }, 3000);
+    }
+  }, 350);
+}
+
+function doLogout() {
+  sessionStorage.removeItem('ef_admin_auth');
+  location.reload();
+}
+
+function showPanel() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  initApp();
+}
+
+/* ════ DATA CACHE — refreshed by refreshAll() ════ */
+var _cache = { users: [], deps: [], wds: [], logs: [], waitlist: [] };
+
+async function loadAll() {
+  var results = await Promise.all([
+    dbGetAllUsers(),
+    dbGetAllDeposits(),
+    dbGetAllWithdrawals(),
+    dbGetActivityLog(),
+    dbGetWaitlist(),
+  ]);
+  _cache.users    = results[0];
+  _cache.deps     = results[1];
+  _cache.wds      = results[2];
+  _cache.logs     = results[3];
+  _cache.waitlist = results[4];
+}
+
+function getUserById(id) {
+  return _cache.users.find(function(u){ return u.id === id; }) || null;
+}
+
+async function addLog(msg, type) {
+  type = type || 'info';
+  await dbAddLog(type, msg, null, null);
+  if (currentSection === 'activity') {
+    _cache.logs = await dbGetActivityLog();
+    renderActivityLog();
+  }
+}
+
+/* ════ STATUS PILLS ════ */
+function spill(s) {
+  var m = {
+    'REGISTERED':      '<span class="pill pill-blue">Registered</span>',
+    'DEPOSIT_PENDING': '<span class="pill pill-gray">Awaiting Deposit</span>',
+    'PROCESSING': '<span class="pill pill-gold"><span class="pill-dot"></span>Processing</span>',
+    'PENDING':    '<span class="pill pill-gold"><span class="pill-dot"></span>Pending</span>',
+    'ACTIVE':     '<span class="pill pill-green"><span class="pill-dot"></span>Active</span>',
+    'REJECTED':   '<span class="pill pill-red">Rejected</span>',
+    'PAID':       '<span class="pill pill-green">Paid</span>',
+  };
+  return m[s] || '<span class="pill pill-gray">' + esc(s||'Unknown') + '</span>';
+}
+
+/* ════ STATE ════ */
+var currentSection = 'overview';
+var activeDepId    = null;
+var activeWdId     = null;
+var clockTimer     = null;
+
+/* ════ MOBILE SIDEBAR ════ */
+function openSidebar()  { $('sidebar').classList.add('open'); $('sb-overlay').classList.add('open'); }
+function closeSidebar() { $('sidebar').classList.remove('open'); $('sb-overlay').classList.remove('open'); }
+
+/* ════ INIT ════ */
+function initApp() {
+  icons();
+  if (clockTimer) clearInterval(clockTimer);
+  clockTimer = setInterval(function(){ $('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
+  $('clock').textContent = new Date().toLocaleTimeString();
+  refreshAll();
+}
+
+/* ════ NAV ════ */
+function show(name, elRef) {
+  currentSection = name;
+  ['overview','users','deposits','withdrawals','activity','settings','waitlist'].forEach(function(s){
+    $('sec-' + s).classList.add('hidden');
+  });
+  $('sec-' + name).classList.remove('hidden');
+  document.querySelectorAll('.sb').forEach(function(b){ b.classList.remove('active'); });
+  var navEl = $('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  else if (elRef) elRef.classList.add('active');
+  var titles = {overview:'Overview',users:'Users',deposits:'Deposits',withdrawals:'Withdrawals',activity:'Activity Log',settings:'Settings',waitlist:'Waitlist'};
+  $('sec-title').textContent = titles[name] || name;
+  closeSidebar();
+  refreshAll();
+}
+
+/* ════ REFRESH ════ */
+async function refreshAll() {
+  await loadAll();
+  renderOverview();
+  updateBadges();
+  if (currentSection === 'users')       renderUsers();
+  if (currentSection === 'deposits')    renderDeposits();
+  if (currentSection === 'withdrawals') renderWithdrawals();
+  if (currentSection === 'activity')    renderActivityLog();
+  if (currentSection === 'waitlist')    renderWaitlist();
+  icons();
+}
+
+/* ════ BADGES ════ */
+function updateBadges() {
+  var pendDeps = _cache.deps.filter(function(d){ return d.status === 'PROCESSING' || d.status === 'PENDING'; });
+  var pendWds  = _cache.wds.filter(function(w){ return w.status === 'PENDING'; });
+  if (pendDeps.length) { $('dep-badge').textContent = pendDeps.length; $('dep-badge').classList.remove('hidden'); }
+  else $('dep-badge').classList.add('hidden');
+  if (pendWds.length)  { $('wd-badge').textContent  = pendWds.length;  $('wd-badge').classList.remove('hidden'); }
+  else $('wd-badge').classList.add('hidden');
+  var pendWl = _cache.waitlist.filter(function(e){ return e.status === 'WAITLIST'; });
+  if (pendWl.length) { $('wl-badge').textContent = pendWl.length; $('wl-badge').classList.remove('hidden'); }
+  else $('wl-badge').classList.add('hidden');
+}
+
+/* ════ OVERVIEW ════ */
+function renderOverview() {
+  var users = _cache.users;
+  var deps  = _cache.deps;
+  var wds   = _cache.wds;
+  var actives = users.filter(function(u){ return u.status === 'ACTIVE'; }).length;
+  var pending = deps.filter(function(d){ return d.status === 'PROCESSING' || d.status === 'PENDING'; }).length
+              + wds.filter(function(w){ return w.status === 'PENDING'; }).length;
+  var volume  = deps.reduce(function(s,d){ return s + (parseFloat(d.amount)||0); }, 0);
+  $('ov-users').textContent   = users.length;
+  $('ov-active').textContent  = actives;
+  $('ov-pending').textContent = pending;
+  $('ov-volume').textContent  = fmt(volume);
+
+  /* Pending deposits quick-list */
+  var pdeps = deps.filter(function(d){ return d.status === 'PROCESSING' || d.status === 'PENDING'; }).slice(-5).reverse();
+  $('ov-dep-list').innerHTML = pdeps.length
+    ? pdeps.map(function(d){
+        var u = getUserById(d.user_id) || {};
+        return '<div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(255,255,255,.05)">'
+          + '<div><p class="text-sm font-semibold">' + esc(u.name||'Unknown') + '</p>'
+          + '<p class="text-xs text-gray-500">' + esc(d.tier||'—') + ' · ' + ago(d.submitted_at) + '</p></div>'
+          + '<div class="flex items-center gap-2"><span class="num text-sm font-bold" style="color:var(--green)">' + fmt(d.amount) + '</span>'
+          + '<button onclick="openDepModal(\'' + esc(d.id) + '\')" class="btn btn-primary py-1.5 px-3 text-xs">Review</button></div></div>';
+      }).join('')
+    : '<div class="flex items-center justify-center py-8 text-xs font-medium" style="opacity:.25">No pending deposits</div>';
+
+  /* Pending withdrawals quick-list */
+  var pwds = wds.filter(function(w){ return w.status === 'PENDING'; }).slice(-5).reverse();
+  $('ov-wd-list').innerHTML = pwds.length
+    ? pwds.map(function(w){
+        var u = getUserById(w.user_id) || {};
+        return '<div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(255,255,255,.05)">'
+          + '<div><p class="text-sm font-semibold">' + esc(u.name||'Unknown') + '</p>'
+          + '<p class="text-xs text-gray-500">' + ago(w.requested_at) + '</p></div>'
+          + '<div class="flex items-center gap-2"><span class="num text-sm font-bold" style="color:var(--gold)">' + fmt(w.amount) + '</span>'
+          + '<button onclick="openWdModal(\'' + esc(w.id) + '\')" class="btn btn-primary py-1.5 px-3 text-xs">Review</button></div></div>';
+      }).join('')
+    : '<div class="flex items-center justify-center py-8 text-xs font-medium" style="opacity:.25">No pending withdrawals</div>';
+
+  icons();
+}
+
+/* ════ USERS ════ */
+function renderUsers() {
+  var users = _cache.users.slice().reverse();
+  var deps  = _cache.deps;
+  $('users-tbody').innerHTML = users.length
+    ? users.map(function(u){
+        var dep = deps.filter(function(d){ return d.user_id === u.id; }).pop() || {};
+        return '<tr>'
+          + '<td class="font-semibold">' + esc(u.name||'—') + '</td>'
+          + '<td class="text-xs text-gray-400">' + esc(u.email||'—') + '</td>'
+          + '<td><span class="text-xs font-semibold" style="color:var(--red)">' + esc(u.tier_label||'—') + '</span></td>'
+          + '<td class="num font-bold" style="color:var(--green)">' + (dep.amount ? fmt(dep.amount) : '—') + '</td>'
+          + '<td>' + spill(u.status||'REGISTERED') + '</td>'
+          + '<td class="text-xs text-gray-500">' + fmtD(u.created_at) + '</td>'
+          + '</tr>';
+      }).join('')
+    : '<tr><td colspan="6"><div class="flex items-center justify-center py-10 text-xs font-medium" style="opacity:.25">No registered users yet</div></td></tr>';
+}
+
+/* ════ DEPOSITS ════ */
+function renderDeposits() {
+  var all    = _cache.deps.slice().reverse();
+  var filter = ($('dep-filter') || {}).value || 'all';
+  var deps   = filter === 'all' ? all : all.filter(function(d){ return d.status === filter; });
+  $('dep-tbody').innerHTML = deps.length
+    ? deps.map(function(d){
+        var u = getUserById(d.user_id) || {};
+        var pending = d.status === 'PROCESSING' || d.status === 'PENDING';
+        return '<tr>'
+          + '<td class="font-semibold">' + esc(u.name||'Unknown') + '</td>'
+          + '<td class="text-xs" style="color:var(--red)">' + esc(d.tier||'—') + '</td>'
+          + '<td class="num font-bold" style="color:var(--green)">' + fmt(d.amount) + '</td>'
+          + '<td class="text-xs text-gray-400">' + esc(d.method||'—') + '</td>'
+          + '<td class="text-xs text-gray-500 whitespace-nowrap">' + fmtD(d.submitted_at) + '</td>'
+          + '<td>' + spill(d.status) + '</td>'
+          + '<td>' + (pending
+              ? '<button onclick="openDepModal(\'' + esc(d.id) + '\')" class="btn btn-primary py-1.5 px-3 text-xs">Review</button>'
+              : '<button onclick="openDepModal(\'' + esc(d.id) + '\')" class="btn btn-ghost   py-1.5 px-3 text-xs">Details</button>')
+          + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="7"><div class="flex items-center justify-center py-10 text-xs font-medium" style="opacity:.25">No deposits found</div></td></tr>';
+  icons();
+}
+
+/* ════ WITHDRAWALS ════ */
+function renderWithdrawals() {
+  var wds = _cache.wds.slice().reverse();
+  $('wd-tbody').innerHTML = wds.length
+    ? wds.map(function(w){
+        var u = getUserById(w.user_id) || {};
+        return '<tr>'
+          + '<td class="font-semibold">' + esc(u.name||'Unknown') + '</td>'
+          + '<td class="num font-bold" style="color:var(--gold)">' + fmt(w.amount) + '</td>'
+          + '<td class="font-mono text-xs text-gray-400" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(w.wallet||'—') + '</td>'
+          + '<td class="text-xs text-gray-500 whitespace-nowrap">' + fmtD(w.requested_at) + '</td>'
+          + '<td>' + spill(w.status||'PENDING') + '</td>'
+          + '<td class="text-xs text-gray-500">' + esc(w.note||'—') + '</td>'
+          + '<td>' + (w.status === 'PENDING'
+              ? '<button onclick="openWdModal(\'' + esc(w.id) + '\')" class="btn btn-primary py-1.5 px-3 text-xs">Review</button>'
+              : '<button onclick="openWdModal(\'' + esc(w.id) + '\')" class="btn btn-ghost   py-1.5 px-3 text-xs">Details</button>')
+          + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="7"><div class="flex items-center justify-center py-10 text-xs font-medium" style="opacity:.25">No withdrawal requests</div></td></tr>';
+  icons();
+}
+
+/* ════ ACTIVITY LOG ════ */
+function renderActivityLog() {
+  var logs = _cache.logs;
+  var el   = $('log-list');
+  if (!logs.length) { el.innerHTML = '<div class="flex items-center justify-center py-8 text-xs font-medium" style="opacity:.25">No activity yet</div>'; return; }
+  var ic = {info:'ℹ', success:'✓', error:'✕', warning:'⚠'};
+  var cl = {info:'#818cf8', success:'#19c98a', error:'#ff3340', warning:'#f5a623'};
+  el.innerHTML = logs.map(function(l){
+    return '<div class="flex items-start gap-2.5 py-2 border-b" style="border-color:rgba(255,255,255,.05)">'
+      + '<span class="text-xs font-bold mt-0.5 shrink-0" style="color:' + (cl[l.type]||'#818cf8') + '">' + (ic[l.type]||'•') + '</span>'
+      + '<div class="flex-1 min-w-0"><p class="text-xs">' + esc(l.message) + '</p>'
+      + '<p class="text-xs text-gray-600 mt-0.5">' + ago(l.created_at) + '</p></div></div>';
+  }).join('');
+}
+
+async function clearLog() {
+  if (!confirm('Clear all activity logs?')) return;
+  await dbClearLog();
+  _cache.logs = [];
+  renderActivityLog();
+}
+
+/* ════ DEPOSIT MODAL ════ */
+function openDepModal(id) {
+  activeDepId = id;
+  var dep = _cache.deps.find(function(d){ return d.id === id; });
+  if (!dep) return;
+  var u = getUserById(dep.user_id) || {};
+  $('dep-modal-title').textContent = (dep.status === 'PROCESSING' || dep.status === 'PENDING') ? 'Review Deposit' : 'Deposit Details';
+  $('dep-modal-id').textContent    = 'ID: ' + id;
+  $('dep-note').value              = dep.note || '';
+  $('dep-modal-body').innerHTML    =
+    '<div class="card-inner p-4 rounded-xl"><div class="grid grid-cols-2 gap-3">'
+    + '<div><p class="text-xs text-gray-500 mb-1">User</p><p class="font-semibold">' + esc(u.name||'Unknown') + '</p><p class="text-xs text-gray-500">' + esc(u.email||'—') + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Amount</p><p class="num text-xl font-bold" style="color:var(--green)">' + fmt(dep.amount) + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Tier</p><p class="text-sm font-semibold" style="color:var(--red)">' + esc(dep.tier||'—') + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Method</p><p class="text-xs text-gray-300">' + esc(dep.method||'—') + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Status</p>' + spill(dep.status) + '</div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Submitted</p><p class="text-xs">' + fmtD(dep.submitted_at) + '</p></div>'
+    + '</div></div>';
+  var ab = $('dep-approve-btn'), rb = $('dep-reject-btn');
+  ab.disabled = dep.status === 'ACTIVE';   ab.style.opacity = dep.status === 'ACTIVE'   ? '.35' : '';
+  rb.disabled = dep.status === 'REJECTED'; rb.style.opacity = dep.status === 'REJECTED' ? '.35' : '';
+  $('dep-modal').classList.add('open');
+  icons();
+}
+
+async function processDeposit(status) {
+  if (!activeDepId) return;
+  var ab = $('dep-approve-btn'), rb = $('dep-reject-btn');
+  if (ab) ab.disabled = true; if (rb) rb.disabled = true;
+  var dep = _cache.deps.find(function(d){ return d.id === activeDepId; });
+  if (!dep) { toast('Deposit not found', 'error'); return; }
+  var note = ($('dep-note').value || '').trim();
+  await dbUpdateDeposit(activeDepId, { status: status, processed_at: new Date().toISOString(), note: note });
+  if (status === 'ACTIVE') {
+    await dbUpdateUser(dep.user_id, { status: 'ACTIVE', activated_at: new Date().toISOString() });
+    toast('Deposit approved — account is now live', 'success');
+    await addLog('Deposit approved → ' + esc((getUserById(dep.user_id)||{}).name||'user') + ' activated', 'success');
+  } else {
+    await dbUpdateUser(dep.user_id, { status: 'REJECTED' });
+    toast('Deposit rejected', 'error');
+    await addLog('Deposit rejected for ' + esc((getUserById(dep.user_id)||{}).name||'user'), 'error');
+  }
+  closeModal('dep-modal');
+  refreshAll();
+}
+
+/* ════ WITHDRAWAL MODAL ════ */
+function openWdModal(id) {
+  activeWdId = id;
+  var wd = _cache.wds.find(function(w){ return w.id === id; });
+  if (!wd) return;
+  var u = getUserById(wd.user_id) || {};
+  $('wd-modal-id').textContent = 'ID: ' + id;
+  $('wd-note').value           = wd.note || '';
+  $('wd-modal-body').innerHTML =
+    '<div class="card-inner p-4 rounded-xl mb-3"><div class="grid grid-cols-2 gap-3">'
+    + '<div><p class="text-xs text-gray-500 mb-1">User</p><p class="font-semibold">' + esc(u.name||'—') + '</p><p class="text-xs text-gray-500">' + esc(u.email||'—') + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Amount</p><p class="num text-xl font-bold" style="color:var(--gold)">' + fmt(wd.amount) + '</p></div>'
+    + '<div class="col-span-2"><p class="text-xs text-gray-500 mb-1">Wallet</p><p class="font-mono text-xs text-indigo-300 break-all">' + esc(wd.wallet||'—') + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Requested</p><p class="text-xs">' + fmtD(wd.requested_at) + '</p></div>'
+    + '<div><p class="text-xs text-gray-500 mb-1">Status</p>' + spill(wd.status) + '</div>'
+    + '</div></div>';
+  $('wd-modal').classList.add('open');
+  icons();
+}
+
+async function processWithdrawal(status) {
+  if (!activeWdId) return;
+  var pb = $('wd-pay-btn'), rb = $('wd-reject-btn');
+  if (pb) pb.disabled = true; if (rb) rb.disabled = true;
+  var wd = _cache.wds.find(function(w){ return w.id === activeWdId; });
+  if (!wd) { toast('Withdrawal not found', 'error'); return; }
+  var note = ($('wd-note').value || '').trim();
+  await dbUpdateWithdrawal(activeWdId, { status: status, processed_at: new Date().toISOString(), note: note });
+  var uname = esc((getUserById(wd.user_id)||{}).name||'user');
+  if (status === 'PAID') {
+    toast('Withdrawal marked PAID', 'success');
+    await addLog('Withdrawal marked paid → ' + uname, 'success');
+  } else {
+    await dbUpdateUser(wd.user_id, { status: 'ACTIVE' });
+    toast('Withdrawal rejected — account resumed', 'info');
+    await addLog('Withdrawal rejected → ' + uname + ' account resumed', 'warning');
+  }
+  closeModal('wd-modal');
+  refreshAll();
+}
+
+/* ════ MODAL UTILS ════ */
+function closeModal(id) { $(id).classList.remove('open'); }
+document.addEventListener('click', function(e) {
+  ['dep-modal','wd-modal'].forEach(function(id){ var el=$(id); if (el && e.target===el) el.classList.remove('open'); });
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') ['dep-modal','wd-modal'].forEach(function(id){ var el=$(id); if(el) el.classList.remove('open'); });
+});
+
+/* ════ TOAST ════ */
+var toastTimer;
+function toast(msg, type) {
+  type = type || 'info';
+  clearTimeout(toastTimer);
+  var styles = {
+    success:{bg:'#052e16', border:'rgba(25,201,138,.25)',  icon:'✓', color:'#19c98a'},
+    error:  {bg:'#2d0a0a', border:'rgba(255,51,64,.25)',   icon:'✕', color:'#ff3340'},
+    info:   {bg:'#111114', border:'rgba(255,255,255,.12)', icon:'ℹ', color:'#9ca3af'},
+    warning:{bg:'#1f1200', border:'rgba(245,166,35,.25)',  icon:'⚠', color:'#f5a623'},
+  };
+  var st = styles[type] || styles.info;
+  var inn = $('toast-inner');
+  inn.style.background = st.bg; inn.style.borderColor = st.border;
+  $('t-icon').textContent = st.icon; $('t-icon').style.color = st.color;
+  $('t-msg').textContent  = msg;
+  var t = $('toast');
+  t.style.display = 'flex'; t.className = 'show';
+  toastTimer = setTimeout(function(){ t.style.display='none'; t.className=''; }, 3500);
+}
+
+/* ════ WAITLIST ════ */
+function renderWaitlist() {
+  var entries = _cache.waitlist.slice().reverse();
+  $('wl-tbody').innerHTML = entries.length
+    ? entries.map(function(e){
+        var st = e.status || 'WAITLIST';
+        var pill = st === 'WAITLIST'    ? '<span class="pill pill-blue">Waitlist</span>'
+                 : st === 'INVITED'    ? '<span class="pill pill-gold"><span class="pill-dot"></span>Invited</span>'
+                 : '<span class="pill pill-green">Registered</span>';
+        var code = e.invite_code || '';
+        var refByCell = e.ref_by
+          ? '<span class="font-mono text-xs" style="color:var(--gold)">' + esc(e.ref_by) + '</span>'
+          : '<span class="text-xs text-gray-500">—</span>';
+        return '<tr>'
+          + '<td class="text-sm font-medium">' + esc(e.email||'—') + '</td>'
+          + '<td>' + pill + '</td>'
+          + '<td>' + refByCell + '</td>'
+          + '<td class="text-xs text-gray-500">' + fmtD(e.joined_at) + '</td>'
+          + '<td class="font-mono text-xs text-gray-400">' + (code ? esc(code) : '—') + '</td>'
+          + '<td>' + (st === 'WAITLIST'
+              ? '<button onclick="inviteUser(\'' + esc(e.id) + '\')" class="btn btn-primary py-1.5 px-3 text-xs">Generate Invite</button>'
+              : code
+                ? '<button onclick="copyInviteCode(\'' + esc(code) + '\')" class="btn btn-ghost py-1.5 px-3 text-xs">Copy Link</button>'
+                : '—')
+          + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="5"><div class="flex items-center justify-center py-10 text-xs font-medium" style="opacity:.25">No waitlist entries yet — users sign up via the landing page</div></td></tr>';
+  icons();
+}
+
+async function inviteUser(entryId) {
+  var entry = _cache.waitlist.find(function(e){ return e.id === entryId; });
+  if (!entry) { toast('Entry not found', 'error'); return; }
+  if (entry.status !== 'WAITLIST') { toast('Already invited or registered', 'warning'); return; }
+  var code = Math.random().toString(36).substr(2,4).toUpperCase()
+           + Math.random().toString(36).substr(2,4).toUpperCase();
+  await dbUpdateWaitlist(entryId, { invite_code: code, status: 'INVITED', invited_at: new Date().toISOString() });
+  var base = location.href.replace(/[^\/]*$/, '');
+  var link = base + 'register.html?invite=' + code;
+  await addLog('Invite generated for ' + esc(entry.email), 'info');
+  try { navigator.clipboard.writeText(link); toast('Invite link copied to clipboard!', 'success'); }
+  catch(e) { toast('Code: ' + code + ' (copy failed — share manually)', 'warning'); }
+  refreshAll();
+}
+
+function copyInviteCode(code) {
+  var base = location.href.replace(/[^\/]*$/, '');
+  var link = base + 'register.html?invite=' + code;
+  try { navigator.clipboard.writeText(link); toast('Invite link copied!', 'success'); }
+  catch(e) { toast('Link: register.html?invite=' + code, 'info'); }
+}
+
+/* ════ SETTINGS ════ */
+async function seedDemo() {
+  var uid = genId();
+  await dbCreateUser({ id: uid, name: 'Demo Investor', email: 'demo@equiflow.com', password: 'demo1234', status: 'PROCESSING', plan_key: 'ai-growth', tier_label: 'AI Growth Capital', tier_amount: 5000, created_at: new Date().toISOString() });
+  await dbCreateDeposit({ id: genId(), user_id: uid, tier: 'AI Growth Capital', plan: 'AI Growth Capital', type: '', amount: 5000, method: 'USDT TRC20', status: 'PROCESSING', has_proof: false, submitted_at: new Date().toISOString(), note: '' });
+  await addLog('Demo user seeded', 'info');
+  toast('Demo user seeded — check Deposits', 'success');
+  refreshAll();
+}
+
+async function clearAll() {
+  if (!confirm('Clear ALL EquiFlow data? This cannot be undone.')) return;
+  await Promise.all([
+    _db.from('users').delete().neq('id', ''),
+    _db.from('deposits').delete().neq('id', ''),
+    _db.from('withdrawals').delete().neq('id', ''),
+    _db.from('waitlist').delete().neq('id', ''),
+    dbClearLog(),
+  ]);
+  await dbAddLog('warning', 'All data cleared by admin', null, null);
+  toast('All data cleared', 'info');
+  refreshAll();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | Create Account</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#080809;
+    background-image:radial-gradient(ellipse 90% 55% at 50% 0%,rgba(255,51,64,.08) 0%,transparent 70%);
+    color:#e2e4ed;
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px 16px;
+  }
+
+  /* ── Brand ── */
+  .brand{font-family:'Montserrat',sans-serif;font-weight:900;letter-spacing:.18em;color:#fff;font-size:16px}
+  .brand span{color:#ff3340}
+
+  /* ── Card ── */
+  .card{
+    width:100%;max-width:420px;
+    background:#0d0d0f;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:22px;
+    padding:36px 32px 32px;
+    box-shadow:0 32px 80px rgba(0,0,0,.5);
+  }
+
+  /* ── Header ── */
+  .card-head{text-align:center;margin-bottom:28px}
+  .badge-icon{
+    width:52px;height:52px;border-radius:14px;
+    background:#ff3340;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 14px;
+    box-shadow:0 8px 24px rgba(255,51,64,.3);
+  }
+  .badge-icon svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .card-head h1{font-size:20px;font-weight:700;margin-bottom:6px}
+  .card-head p{font-size:13px;color:#6b7280;line-height:1.5}
+  .invite-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.2);
+    border-radius:999px;padding:4px 12px;
+    font-size:11px;font-weight:600;color:#ff8a91;
+    margin-bottom:6px;
+  }
+  .invite-chip .dot{width:6px;height:6px;border-radius:50%;background:#ff3340}
+
+  /* ── Form ── */
+  .field{margin-bottom:16px}
+  label{display:block;font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase}
+  input{
+    width:100%;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:10px;
+    padding:10px 13px;
+    color:#e2e4ed;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  input:focus{border-color:#ff3340}
+  input::placeholder{color:#374151}
+  input[readonly]{color:#9ca3af;cursor:default;opacity:.8}
+  input[readonly]:focus{border-color:rgba(255,255,255,.09)}
+
+  /* ── Password wrapper ── */
+  .pw-wrap{position:relative}
+  .pw-wrap input{padding-right:40px}
+  .pw-toggle{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    background:none;border:none;cursor:pointer;color:#4b5563;padding:4px;
+    display:flex;align-items:center;transition:color .15s;
+  }
+  .pw-toggle:hover{color:#9ca3af}
+  .pw-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Strength bar ── */
+  .strength-bar{display:flex;gap:3px;margin-top:6px}
+  .strength-seg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.08);transition:background .2s}
+  .strength-seg.weak{background:#f87171}
+  .strength-seg.fair{background:#f59e0b}
+  .strength-seg.good{background:#22c55e}
+  .strength-label{font-size:10px;color:#6b7280;margin-top:4px}
+
+  /* ── Divider ── */
+  .divider{border:none;border-top:1px solid rgba(255,255,255,.07);margin:20px 0}
+
+  /* ── Button ── */
+  .btn-submit{
+    width:100%;padding:12px;
+    background:#ff3340;color:#fff;
+    border:none;border-radius:12px;
+    font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(255,51,64,.28);
+    transition:opacity .15s,transform .1s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-top:4px;
+  }
+  .btn-submit:hover{opacity:.88}
+  .btn-submit:active{transform:scale(.98)}
+  .btn-submit:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn-submit svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Error / success states ── */
+  .alert{border-radius:10px;padding:11px 14px;font-size:12px;font-weight:500;display:none;margin-bottom:16px;line-height:1.5}
+  .alert.error{background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.2);color:#ff8a91}
+  .alert.success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#4ade80}
+  .alert.show{display:block}
+
+  /* ── Invalid invite screen ── */
+  #invalid-screen{display:none;text-align:center}
+  #invalid-screen.show{display:block}
+  #register-form.hidden{display:none}
+  .icon-invalid{
+    width:52px;height:52px;border-radius:14px;
+    background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 14px;
+  }
+  .icon-invalid svg{width:24px;height:24px;stroke:#f87171;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Success screen ── */
+  #success-screen{display:none;text-align:center}
+  #success-screen.show{display:block}
+  .icon-success{
+    width:56px;height:56px;border-radius:16px;
+    background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;
+  }
+  .icon-success svg{width:26px;height:26px;stroke:#22c55e;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .success-name{font-size:20px;font-weight:700;margin-bottom:8px}
+  .success-sub{font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:24px}
+
+  /* ── Footer ── */
+  .footer{margin-top:20px;text-align:center;font-size:11px;color:#374151}
+  .footer a{color:#ff3340;text-decoration:none;font-weight:500}
+  .footer a:hover{text-decoration:underline}
+
+  /* ── Animations ── */
+  @keyframes cardIn{from{transform:translateY(24px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+  .card{animation:cardIn .4s cubic-bezier(.22,1,.36,1)}
+
+  @media(max-width:480px){
+    body{padding:16px 12px;justify-content:flex-start;padding-top:32px}
+    .card{padding:26px 20px 24px;border-radius:18px}
+    .card-head h1{font-size:17px}
+    label{font-size:10px}
+    input{font-size:14px;padding:10px 12px}
+  }
+</style>
+
+<body>
+
+<!-- Top brand mark -->
+<div style="text-align:center;margin-bottom:20px">
+  <p class="brand">EQUI<span>FLOW</span></p>
+</div>
+
+<div class="card">
+
+  <!-- ── INVALID INVITE ── -->
+  <div id="invalid-screen">
+    <div class="icon-invalid">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h1 style="font-size:18px;font-weight:700;margin-bottom:8px">Invalid Invite</h1>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px">This invite link is invalid, expired, or has already been used. Please contact support if you believe this is a mistake.</p>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#ff3340;font-weight:600;text-decoration:none">← Back to EquiFlow</a>
+  </div>
+
+  <!-- ── SUCCESS ── -->
+  <div id="success-screen">
+    <div class="icon-success">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <p class="success-name" id="success-name">Welcome aboard!</p>
+    <p class="success-sub">Your EquiFlow account has been created. Our team will reach out shortly with your next steps.</p>
+    <a href="index.html" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;background:#ff3340;color:#fff;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(255,51,64,.25)">← Back to Home</a>
+  </div>
+
+  <!-- ── REGISTER FORM ── -->
+  <div id="register-form">
+    <div class="card-head">
+      <div class="badge-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="invite-chip"><span class="dot"></span>Invite Accepted</div>
+      <h1>Create Your Account</h1>
+      <p>You're in. Fill in your details to get started with EquiFlow.</p>
+    </div>
+
+    <div class="alert error" id="form-error"></div>
+
+    <form onsubmit="submitReg(event)" autocomplete="on">
+      <div class="field">
+        <label>Full Name</label>
+        <input id="reg-name" type="text" placeholder="Jane Doe" autocomplete="name" required>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input id="reg-email" type="email" placeholder="you@example.com" autocomplete="email" readonly>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input id="reg-pass" type="password" placeholder="Choose a strong password" autocomplete="new-password" oninput="checkStrength(this.value)">
+          <button type="button" class="pw-toggle" onclick="togglePw('reg-pass',this)" aria-label="Toggle password">
+            <svg id="eye-1" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="strength-bar">
+          <div class="strength-seg" id="s1"></div>
+          <div class="strength-seg" id="s2"></div>
+          <div class="strength-seg" id="s3"></div>
+          <div class="strength-seg" id="s4"></div>
+        </div>
+        <p class="strength-label" id="strength-label"></p>
+      </div>
+
+      <div class="field" style="margin-bottom:20px">
+        <label>Confirm Password</label>
+        <div class="pw-wrap">
+          <input id="reg-pass2" type="password" placeholder="Repeat your password" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('reg-pass2',this)" aria-label="Toggle password">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-submit" id="reg-btn" type="submit">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Create Account
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<p class="footer">Already have an account? <a href="index.html">Sign in</a> &nbsp;·&nbsp; <a href="index.html">EquiFlow Home</a></p>
+
+</body>
+
+<script>
+/* ── Read invite code from URL ── */
+const params     = new URLSearchParams(window.location.search);
+const inviteCode = (params.get('invite')||'').trim().toUpperCase();
+
+let waitlistEntry = null;
+
+async function boot(){
+  if(!inviteCode){ showInvalid('No invite code in URL.'); return; }
+
+  const entry = await dbGetWaitlistByInviteCode(inviteCode);
+
+  if(!entry){
+    showInvalid('Invite code not found.'); return;
+  }
+  if(entry.status === 'REGISTERED'){
+    showInvalid('This invite has already been used to create an account.'); return;
+  }
+  if(entry.status !== 'INVITED'){
+    showInvalid('This invite link is not active yet.'); return;
+  }
+
+  waitlistEntry = entry;
+
+  /* pre-fill email (readonly) */
+  document.getElementById('reg-email').value = entry.email;
+  document.getElementById('reg-name').focus();
+}
+
+function showInvalid(msg){
+  document.getElementById('register-form').classList.add('hidden');
+  const el = document.getElementById('invalid-screen');
+  el.classList.add('show');
+  const p = el.querySelector('p');
+  if(p && msg) p.textContent = msg;
+}
+
+/* ── Password visibility toggle ── */
+function togglePw(inputId, btn){
+  const inp = document.getElementById(inputId);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.querySelector('svg').innerHTML = isHidden
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+/* ── Password strength ── */
+function checkStrength(pw){
+  const segs  = [document.getElementById('s1'),document.getElementById('s2'),document.getElementById('s3'),document.getElementById('s4')];
+  const label = document.getElementById('strength-label');
+  segs.forEach(s=>{ s.className='strength-seg'; });
+  if(!pw){ label.textContent=''; return; }
+
+  let score = 0;
+  if(pw.length >= 8)  score++;
+  if(/[A-Z]/.test(pw)) score++;
+  if(/[0-9]/.test(pw)) score++;
+  if(/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const maps = [
+    {cls:'weak',  text:'Weak',        color:'#f87171'},
+    {cls:'weak',  text:'Fair',        color:'#f59e0b'},
+    {cls:'fair',  text:'Good',        color:'#f59e0b'},
+    {cls:'good',  text:'Strong',      color:'#4ade80'},
+  ];
+  const m = maps[score-1] || maps[0];
+  for(let i=0;i<score;i++) segs[i].classList.add(m.cls);
+  label.textContent = score > 0 ? m.text : '';
+  label.style.color = m.color || '#6b7280';
+}
+
+/* ── Submit ── */
+async function submitReg(e){
+  e.preventDefault();
+  const errEl  = document.getElementById('form-error');
+  const btn    = document.getElementById('reg-btn');
+  errEl.classList.remove('show');
+
+  const name   = document.getElementById('reg-name').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  const pass2  = document.getElementById('reg-pass2').value;
+
+  /* Validation */
+  if(!name){           showErr('Please enter your full name.'); return; }
+  if(pass.length < 8){ showErr('Password must be at least 8 characters.'); return; }
+  if(pass !== pass2){  showErr('Passwords do not match.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-9.27"/></svg> Creating account…';
+
+  /* Create user in Supabase */
+  const userId = genId();
+  const created = await dbCreateUser({
+    id:          userId,
+    name:        name,
+    email:       email,
+    password:    pass,
+    tier_label:  'Standard',
+    tier_amount: 0,
+    status:      'DEPOSIT_PENDING',
+    created_at:  new Date().toISOString(),
+    invite_code: inviteCode,
+  });
+
+  if (!created) {
+    showErr('Failed to create account. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Create Account';
+    return;
+  }
+
+  /* Mark waitlist entry as REGISTERED */
+  if (waitlistEntry) {
+    await dbUpdateWaitlist(waitlistEntry.id, { status: 'REGISTERED' });
+  }
+
+  /* Log activity */
+  await dbAddLog('success', 'New registration: ' + name + ' (' + email + ')', userId, null);
+
+  /* Set session and redirect */
+  localStorage.setItem('ef_current_user', userId);
+  localStorage.setItem('ef_current_name', name);
+  window.location.href = 'choose-plan.html';
+
+  function showErr(msg){
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Create Account';
+  }
+}
+
+function showErr(msg){
+  const errEl = document.getElementById('form-error');
+  errEl.textContent = msg;
+  errEl.classList.add('show');
+}
+
+/* ── Spin keyframe for loading state ── */
+const style = document.createElement('style');
+style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+
+boot();
+</script>
+</html>

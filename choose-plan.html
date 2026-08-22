@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | Choose Your Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --red:#ff3340;
+    --gold:#f5a623;
+    --green:#19c98a;
+    --dark:#080809;
+    --card:#0d0d0f;
+    --border:rgba(255,255,255,.08);
+  }
+
+  html,body{min-height:100%;background:var(--dark)}
+  body{
+    color:#e2e4ed;
+    font-family:'Inter',system-ui,sans-serif;
+    overflow-x:hidden;
+  }
+
+  /* ── Background blobs ── */
+  .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.35;animation:drift 18s ease-in-out infinite}
+  .blob-1{width:600px;height:600px;background:radial-gradient(circle,rgba(255,51,64,.18),transparent 70%);top:-100px;left:-150px;animation-delay:0s}
+  .blob-2{width:500px;height:500px;background:radial-gradient(circle,rgba(245,166,35,.12),transparent 70%);top:30%;right:-100px;animation-delay:-6s}
+  .blob-3{width:400px;height:400px;background:radial-gradient(circle,rgba(255,51,64,.08),transparent 70%);bottom:-80px;left:30%;animation-delay:-12s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,30px) scale(.95)}}
+
+  /* Grid overlay */
+  .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:48px 48px}
+
+  /* ── Layout ── */
+  .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 20px 60px}
+
+  /* ── Header ── */
+  .brand{font-family:'Montserrat',sans-serif;font-weight:900;letter-spacing:.18em;font-size:15px;color:#fff;text-align:center;margin-bottom:28px}
+  .brand span{color:var(--red)}
+
+  /* ── Step bar ── */
+  .steps{display:flex;align-items:center;gap:0;margin-bottom:48px}
+  .step{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;letter-spacing:.04em}
+  .step.done{color:#19c98a}
+  .step.active{color:#fff}
+  .step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid currentColor;flex-shrink:0;transition:all .3s}
+  .step.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+  .step.active .step-num{background:var(--red);border-color:var(--red);color:#fff}
+  .step-line{width:28px;height:1.5px;background:rgba(255,255,255,.1);margin:0 5px}
+  @media(max-width:540px){.step-line{width:14px;margin:0 3px}.step span:not(.step-num){display:none}.steps{margin-bottom:32px}}
+
+  /* ── Hero ── */
+  .hero{text-align:center;margin-bottom:36px}
+  .hero-ey{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.2);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:16px}
+  .hero h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(26px,5vw,44px);line-height:1.1;margin-bottom:14px;letter-spacing:-.02em}
+  .hero h1 em{font-style:normal;color:var(--red)}
+  .hero p{color:#6b7280;font-size:15px;max-width:520px;margin:0 auto;line-height:1.65}
+
+  /* ════════════════════════════════
+     LEGAL PANEL
+  ════════════════════════════════ */
+  .legal-card{
+    background:#fff;
+    border-radius:22px;
+    padding:44px 48px;
+    box-shadow:0 8px 48px rgba(0,0,0,.32),0 1px 0 rgba(0,0,0,.06);
+    width:100%;max-width:680px;
+    margin-bottom:0;
+  }
+  .legal-card-head{
+    margin-bottom:32px;
+    padding-bottom:28px;
+    border-bottom:1.5px solid #f1f2f4;
+  }
+  .legal-doc-badge{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:5px 14px;border-radius:999px;
+    background:#fff5f5;border:1px solid #fecdd3;
+    font-size:10px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:#dc2626;
+    margin-bottom:18px;
+  }
+  .legal-card-title{
+    font-family:'Montserrat',sans-serif;
+    font-weight:900;font-size:22px;color:#0f172a;
+    margin-bottom:10px;letter-spacing:-.02em;line-height:1.2;
+  }
+  .legal-card-sub{
+    font-size:13.5px;color:#64748b;line-height:1.65;
+  }
+
+  /* Agreement items */
+  .legal-items{display:flex;flex-direction:column}
+  .legal-item{
+    display:flex;align-items:flex-start;gap:16px;
+    padding:20px 0;
+    border-bottom:1px solid #f1f2f4;
+  }
+  .legal-item:last-child{border-bottom:none}
+
+  /* Checkbox */
+  .legal-cb-wrap{flex-shrink:0;margin-top:1px}
+  .legal-cb{
+    width:20px;height:20px;border-radius:6px;
+    border:2px solid #cbd5e1;
+    cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background:#fff;
+    transition:background .18s,border-color .18s;
+    display:block;position:relative;flex-shrink:0;
+  }
+  .legal-cb:checked{background:var(--red);border-color:var(--red)}
+  .legal-cb:checked::after{
+    content:'';position:absolute;
+    top:3px;left:6px;
+    width:5px;height:9px;
+    border:2.5px solid #fff;
+    border-top:none;border-left:none;
+    transform:rotate(45deg);
+  }
+  .legal-cb:focus{outline:2px solid rgba(255,51,64,.3);outline-offset:2px}
+  .legal-cb:hover:not(:checked){border-color:#ff3340}
+
+  /* Item body — label makes full row clickable */
+  .legal-item-body{flex:1;cursor:pointer;display:block}
+  .legal-item-title{
+    font-family:'Montserrat',sans-serif;
+    font-weight:800;font-size:14px;color:#0f172a;
+    margin-bottom:7px;line-height:1.3;
+  }
+  .legal-item-desc{
+    font-size:13px;color:#64748b;line-height:1.7;
+  }
+
+  /* Electronic Signature */
+  .legal-sig{
+    margin-top:30px;padding:28px 28px 28px;
+    background:#f8fafc;border-radius:14px;
+    border:1px solid #e2e8f0;
+  }
+  .legal-sig-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .legal-sig-icon{width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+  .legal-sig-title{
+    font-family:'Montserrat',sans-serif;
+    font-weight:800;font-size:14px;color:#0f172a;
+  }
+  .legal-sig-sub{
+    font-size:12.5px;color:#94a3b8;line-height:1.6;margin-bottom:16px;
+  }
+  .legal-sig-input{
+    width:100%;padding:14px 18px;
+    border:1.5px solid #e2e8f0;border-radius:12px;
+    font-family:'Inter',sans-serif;font-size:15px;
+    font-style:italic;color:#0f172a;letter-spacing:.01em;
+    outline:none;transition:border-color .2s,box-shadow .2s;
+    background:#fff;
+  }
+  .legal-sig-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,51,64,.1)}
+  .legal-sig-input::placeholder{color:#cbd5e1;font-style:italic}
+
+  /* Agree button */
+  .agree-btn-wrap{margin-top:28px}
+  .agree-btn{
+    width:100%;padding:15px;border:none;border-radius:13px;
+    font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;
+    letter-spacing:.04em;
+    cursor:pointer;transition:all .22s;
+    background:var(--red);color:#fff;
+    box-shadow:0 4px 18px rgba(255,51,64,.3);
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .agree-btn:disabled{
+    background:#e2e8f0;color:#94a3b8;
+    box-shadow:none;cursor:not-allowed;
+  }
+  .agree-btn:not(:disabled):hover{
+    opacity:.9;box-shadow:0 6px 26px rgba(255,51,64,.42);transform:translateY(-1px);
+  }
+  .agree-btn svg{
+    width:16px;height:16px;stroke:currentColor;fill:none;
+    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;
+  }
+  .agree-progress{
+    text-align:center;margin-top:11px;
+    font-size:12px;color:#94a3b8;
+  }
+  .agree-progress .prog-count{color:var(--red);font-weight:700}
+
+  /* ════════════════════════════════
+     PLAN CARDS
+  ════════════════════════════════ */
+  .plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:880px;margin-bottom:36px}
+  @media(max-width:700px){.plans-grid{grid-template-columns:1fr;max-width:440px}}
+
+  .plan-card{
+    position:relative;
+    border-radius:22px;
+    border:1.5px solid var(--border);
+    background:var(--card);
+    padding:32px 28px 28px;
+    cursor:pointer;
+    transition:transform .35s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .35s;
+    overflow:hidden;
+  }
+  .plan-card::before{
+    content:'';
+    position:absolute;inset:0;
+    border-radius:22px;
+    opacity:0;
+    transition:opacity .35s;
+    pointer-events:none;
+  }
+  .plan-card.red::before{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,51,64,.1),transparent 70%)}
+  .plan-card.gold::before{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(245,166,35,.1),transparent 70%)}
+  .plan-card:hover{transform:translateY(-6px)}
+  .plan-card:hover::before{opacity:1}
+  .plan-card.red:hover{border-color:rgba(255,51,64,.35);box-shadow:0 24px 60px rgba(255,51,64,.12)}
+  .plan-card.gold:hover{border-color:rgba(245,166,35,.35);box-shadow:0 24px 60px rgba(245,166,35,.1)}
+
+  .plan-card.selected{transform:translateY(-8px)}
+  .plan-card.selected::before{opacity:1}
+  .plan-card.red.selected{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 30px 70px rgba(255,51,64,.2)}
+  .plan-card.gold.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 30px 70px rgba(245,166,35,.18)}
+  .plan-card.selected .sel-check{opacity:1;transform:scale(1)}
+  .plan-card.unselected{opacity:.55}
+
+  .sel-check{
+    position:absolute;top:16px;right:16px;
+    width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transform:scale(.6);
+    transition:all .3s cubic-bezier(.22,1,.36,1);
+  }
+  .plan-card.red .sel-check{background:var(--red)}
+  .plan-card.gold .sel-check{background:var(--gold)}
+  .sel-check svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+  .plan-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 10px;border-radius:999px;
+    font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    margin-bottom:20px;
+  }
+  .badge-red{background:rgba(255,51,64,.1);color:var(--red);border:1px solid rgba(255,51,64,.22)}
+  .badge-gold{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.25);animation:badge-pulse 2.4s ease-in-out infinite}
+  @keyframes badge-pulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px rgba(245,166,35,.12)}}
+  .badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .plan-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;line-height:1.2;margin-bottom:6px;letter-spacing:-.01em}
+  .plan-tag{font-size:12.5px;color:#6b7280;margin-bottom:22px;line-height:1.5}
+
+  .features{list-style:none;margin-bottom:24px}
+  .features li{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12.5px;color:#9ca3af;line-height:1.4}
+  .features li:last-child{border-bottom:none}
+  .feat-icon{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:9px}
+  .feat-red{background:rgba(255,51,64,.15);color:var(--red)}
+  .feat-gold{background:rgba(245,166,35,.15);color:var(--gold)}
+  .feat-text{flex:1}
+  .feat-highlight{color:#e2e4ed;font-weight:600}
+
+  .plan-min{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,.07);margin-bottom:18px}
+  .min-label{font-size:11px;color:#4b5563;font-weight:500;letter-spacing:.03em}
+  .min-value{font-family:'Montserrat',sans-serif;font-weight:800;font-size:16px}
+  .min-red{color:var(--red)}
+  .min-gold{color:var(--gold)}
+
+  .plan-cta{
+    width:100%;padding:13px;border:none;border-radius:12px;
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+    cursor:pointer;transition:all .2s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .cta-red{background:var(--red);color:#fff;box-shadow:0 4px 18px rgba(255,51,64,.3)}
+  .cta-red:hover{opacity:.88;box-shadow:0 6px 24px rgba(255,51,64,.4)}
+  .cta-gold{background:var(--gold);color:#000;box-shadow:0 4px 18px rgba(245,166,35,.25)}
+  .cta-gold:hover{opacity:.88;box-shadow:0 6px 24px rgba(245,166,35,.35)}
+  .cta-outline-red{background:transparent;color:var(--red);border:1.5px solid rgba(255,51,64,.4)}
+  .cta-outline-red:hover{background:rgba(255,51,64,.08)}
+  .cta-outline-gold{background:transparent;color:var(--gold);border:1.5px solid rgba(245,166,35,.4)}
+  .cta-outline-gold:hover{background:rgba(245,166,35,.08)}
+
+  /* ── Continue bar ── */
+  .continue-bar{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    padding:16px 24px env(safe-area-inset-bottom,16px);
+    background:rgba(8,8,9,.88);backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,255,255,.08);
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    transform:translateY(100%);
+    transition:transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  .continue-bar.show{transform:translateY(0)}
+  .continue-info .label{font-size:11px;color:#6b7280;margin-bottom:2px}
+  .continue-info .value{font-size:14px;font-weight:700;color:#fff}
+  .continue-btn{
+    padding:12px 28px;border-radius:12px;border:none;
+    font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+    cursor:pointer;transition:all .2s;white-space:nowrap;
+    display:flex;align-items:center;gap:8px;
+  }
+  .continue-btn-red{background:var(--red);color:#fff;box-shadow:0 4px 18px rgba(255,51,64,.35)}
+  .continue-btn-red:hover{opacity:.88}
+  .continue-btn-gold{background:var(--gold);color:#000;box-shadow:0 4px 18px rgba(245,166,35,.3)}
+  .continue-btn-gold:hover{opacity:.88}
+  .continue-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Confirmation overlay ── */
+  #confirm-overlay{
+    position:fixed;inset:0;z-index:300;
+    background:rgba(0,0,0,.86);backdrop-filter:blur(16px);
+    display:none;align-items:center;justify-content:center;padding:24px;
+  }
+  #confirm-overlay.show{display:flex;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .confirm-card{
+    background:#0d0d0f;border:1px solid rgba(255,255,255,.1);
+    border-radius:24px;padding:40px 36px;width:100%;max-width:440px;
+    text-align:center;animation:cardIn .4s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes cardIn{from{transform:translateY(24px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+  .confirm-icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+  .confirm-icon-red{background:rgba(255,51,64,.12);border:1px solid rgba(255,51,64,.25)}
+  .confirm-icon-gold{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.25)}
+  .confirm-plan-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;margin-bottom:8px}
+  .confirm-sub{font-size:13.5px;color:#6b7280;line-height:1.7;margin-bottom:28px}
+  .next-steps{text-align:left;margin-bottom:28px;display:flex;flex-direction:column;gap:12px}
+  .next-step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+  .step-n{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px}
+  .step-n-red{background:rgba(255,51,64,.15);color:var(--red)}
+  .step-n-gold{background:rgba(245,166,35,.15);color:var(--gold)}
+  .step-body h4{font-size:12px;font-weight:700;margin-bottom:3px}
+  .step-body p{font-size:11.5px;color:#6b7280;line-height:1.5}
+  .confirm-cta{width:100%;padding:14px;border:none;border-radius:13px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+  .confirm-cta:hover{opacity:.88}
+
+  /* ── Animations ── */
+  .fade-up{opacity:0;transform:translateY(28px);animation:fadeUp .6s cubic-bezier(.22,1,.36,1) forwards}
+  .fade-up.d1{animation-delay:.1s}
+  .fade-up.d2{animation-delay:.2s}
+  .fade-up.d3{animation-delay:.3s}
+  .fade-up.d4{animation-delay:.4s}
+  .fade-up.d5{animation-delay:.5s}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+
+  /* Mobile tweaks */
+
+  @media(max-width:700px){
+    .page{padding:24px 14px 80px}
+    .hero{margin-bottom:24px}
+    .hero h1{font-size:24px}
+    .plan-card{padding:24px 20px 22px}
+    .plan-name{font-size:16px}
+    .continue-bar{padding:12px 16px env(safe-area-inset-bottom,12px)}
+    .continue-btn{padding:11px 20px;font-size:13px}
+    .confirm-card{padding:30px 22px}
+    .legal-card{padding:24px 20px}
+    .legal-item{gap:12px;padding:16px 0}
+    .legal-card-title{font-size:18px}
+    .legal-sig{padding:20px 18px}
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Background -->
+<div class="bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<div class="page">
+
+  <!-- Brand -->
+  <div class="brand fade-up d1">EQUI<span>FLOW</span></div>
+
+  <!-- Steps — 1,2,3,4 -->
+  <div class="steps fade-up d1">
+    <div class="step done">
+      <div class="step-num">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span>Account Created</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step active" id="step-2">
+      <div class="step-num" id="step-2-num">2</div>
+      <span>Legal Agreements</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-3">
+      <div class="step-num">3</div>
+      <span>Choose Plan</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" id="step-4">
+      <div class="step-num">4</div>
+      <span>Fund Account</span>
+    </div>
+  </div>
+
+  <!-- Hero — updated dynamically per panel -->
+  <div class="hero fade-up d2">
+    <div class="hero-ey" id="hero-eyebrow">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Step 2 of 4
+    </div>
+    <h1 id="hero-title">Review &amp; Accept<br><em>Legal Agreements</em></h1>
+    <p id="hero-sub">Please read and acknowledge the following documents carefully. All items must be accepted before you can proceed.</p>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       PANEL 1 — LEGAL AGREEMENTS
+  ═══════════════════════════════════ -->
+  <div id="panel-legal" style="width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center">
+
+    <div class="legal-card fade-up d3">
+
+      <div class="legal-card-head">
+        <div class="legal-doc-badge">📄 Required Documents</div>
+        <div class="legal-card-title">EquiFlow Legal Agreements &amp; Disclosures</div>
+        <div class="legal-card-sub">The following documents govern your use of the EquiFlow investment platform. Please review each carefully and indicate your acceptance. All items are required to proceed.</div>
+      </div>
+
+      <div class="legal-items">
+
+        <!-- 1. Terms & Conditions -->
+        <div class="legal-item">
+          <div class="legal-cb-wrap">
+            <input type="checkbox" class="legal-cb" id="cb-terms" onchange="checkAgreements()">
+          </div>
+          <label for="cb-terms" class="legal-item-body">
+            <div class="legal-item-title">Terms &amp; Conditions</div>
+            <div class="legal-item-desc">By accessing and using the EquiFlow platform, you agree to abide by our Terms &amp; Conditions in full. These terms govern your rights and obligations as a platform user, including permitted activities, account management, intellectual property, and the applicable dispute resolution process.</div>
+          </label>
+        </div>
+
+        <!-- 2. Risk Disclosure -->
+        <div class="legal-item">
+          <div class="legal-cb-wrap">
+            <input type="checkbox" class="legal-cb" id="cb-risk" onchange="checkAgreements()">
+          </div>
+          <label for="cb-risk" class="legal-item-body">
+            <div class="legal-item-title">Risk Disclosure Statement</div>
+            <div class="legal-item-desc">You acknowledge and accept that all investments carry inherent financial risk. Past performance does not guarantee future results. The value of investments may fluctuate, capital is not guaranteed, and EquiFlow does not warrant that any investment will achieve its projected or stated returns.</div>
+          </label>
+        </div>
+
+        <!-- 3. Privacy Policy -->
+        <div class="legal-item">
+          <div class="legal-cb-wrap">
+            <input type="checkbox" class="legal-cb" id="cb-privacy" onchange="checkAgreements()">
+          </div>
+          <label for="cb-privacy" class="legal-item-body">
+            <div class="legal-item-title">Privacy Policy</div>
+            <div class="legal-item-desc">EquiFlow collects, processes, and stores your personal data strictly in accordance with applicable data protection legislation. Your information is used solely for account management, regulatory compliance, and platform service delivery. We do not sell or share your data with unauthorised third parties.</div>
+          </label>
+        </div>
+
+        <!-- 4. Client & Investment Agreement -->
+        <div class="legal-item">
+          <div class="legal-cb-wrap">
+            <input type="checkbox" class="legal-cb" id="cb-client" onchange="checkAgreements()">
+          </div>
+          <label for="cb-client" class="legal-item-body">
+            <div class="legal-item-title">Client &amp; Investment Agreement</div>
+            <div class="legal-item-desc">This agreement sets out the legal rights and obligations of both the investor and EquiFlow. It governs the terms under which your capital is accepted, managed, and deployed — including payout schedules, withdrawal conditions, and the responsibilities of both parties throughout the investment period.</div>
+          </label>
+        </div>
+
+        <!-- 5. AML Declaration -->
+        <div class="legal-item" style="border-bottom:none">
+          <div class="legal-cb-wrap">
+            <input type="checkbox" class="legal-cb" id="cb-aml" onchange="checkAgreements()">
+          </div>
+          <label for="cb-aml" class="legal-item-body">
+            <div class="legal-item-title">Anti-Money Laundering (AML) Declaration</div>
+            <div class="legal-item-desc">You confirm that all funds you intend to invest are derived entirely from legitimate and lawful sources. You consent to identity verification procedures and agree to cooperate fully with any AML or KYC (Know Your Customer) checks required by EquiFlow or applicable regulatory authorities.</div>
+          </label>
+        </div>
+
+      </div><!-- /legal-items -->
+
+      <!-- Electronic Signature -->
+      <div class="legal-sig">
+        <div class="legal-sig-head">
+          <div class="legal-sig-icon">✍️</div>
+          <div class="legal-sig-title">Electronic Signature</div>
+        </div>
+        <div class="legal-sig-sub">By entering your full legal name below, you are providing a legally binding electronic signature confirming your acceptance of all agreements listed above. This is equivalent to a handwritten signature and is legally enforceable.</div>
+        <input
+          type="text"
+          class="legal-sig-input"
+          id="sig-name"
+          placeholder="Type your full legal name…"
+          oninput="checkAgreements()"
+          autocomplete="name"
+          spellcheck="false"
+        >
+      </div>
+
+      <!-- Agree & Continue button -->
+      <div class="agree-btn-wrap">
+        <button class="agree-btn" id="agree-btn" disabled onclick="agreeAndContinue()">
+          I Agree &amp; Continue
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <div class="agree-progress"><span class="prog-count">0</span> of 5 agreements accepted — signature required</div>
+      </div>
+
+    </div><!-- /legal-card -->
+
+  </div><!-- /panel-legal -->
+
+
+  <!-- ═══════════════════════════════════
+       PANEL 2 — CHOOSE PLAN
+  ═══════════════════════════════════ -->
+  <div id="panel-plans" style="display:none;width:100%;flex-direction:column;align-items:center">
+
+    <div class="plans-grid">
+
+      <!-- ── PLAN 1: ACCESSIBLE ── -->
+      <div class="plan-card red fade-up d3" id="card-accessible" onclick="selectPlan('accessible')">
+        <div class="sel-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+
+        <div class="plan-badge badge-red"><span class="badge-dot"></span>Starter</div>
+        <div class="plan-name">Accessible<br>Opportunities</div>
+        <div class="plan-tag">Start small. Build steadily. Every investor begins somewhere.</div>
+
+        <ul class="features">
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text"><strong class="feat-highlight">Curated global picks</strong> — hand-selected opportunities</span></li>
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text"><strong class="feat-highlight">Monthly profit payouts</strong> direct to your wallet</span></li>
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text">Real-time portfolio dashboard</span></li>
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text">Dedicated account manager</span></li>
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text"><strong class="feat-highlight">Withdraw anytime</strong></span></li>
+          <li><span class="feat-icon feat-red">✓</span><span class="feat-text">Monthly commitment</span></li>
+        </ul>
+
+        <div class="plan-min">
+          <span class="min-label">Minimum Investment</span>
+          <span class="min-value min-red">From $1,000</span>
+        </div>
+
+        <button class="plan-cta cta-outline-red" id="cta-accessible">Choose Starter →</button>
+      </div>
+
+      <!-- ── PLAN 2: AI GROWTH ── -->
+      <div class="plan-card gold fade-up d4" id="card-ai-growth" onclick="selectPlan('ai-growth')">
+        <div class="sel-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+
+        <div class="plan-badge badge-gold">⭐ Most Popular</div>
+        <div class="plan-name">AI Growth<br>Capital Programs</div>
+        <div class="plan-tag">Machine precision, human vision. Let AI compound your wealth faster.</div>
+
+        <ul class="features">
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text"><strong class="feat-highlight">Everything in Starter</strong></span></li>
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text"><strong class="feat-highlight">AI trading algorithms</strong> — 24/7 market execution</span></li>
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text"><strong class="feat-highlight">Priority deal access</strong> — first in, first gain</span></li>
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text">Real-time AI market signals</span></li>
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text">Quarterly portfolio strategy call</span></li>
+          <li><span class="feat-icon feat-gold">✓</span><span class="feat-text"><strong class="feat-highlight">Annual Tesla Model S Investor Recognition Award</strong> — elite members only<span style="display:block;font-size:11px;color:#6b7280;margin-top:4px;line-height:1.55">All confirmed deposits across Tier 1–4 qualify automatically each month. No separate registration required.</span></span></li>
+        </ul>
+
+        <div class="plan-min">
+          <span class="min-label">Minimum Investment</span>
+          <span class="min-value min-gold">From $5,000</span>
+        </div>
+
+        <button class="plan-cta cta-outline-gold" id="cta-ai-growth">Choose AI Growth →</button>
+      </div>
+
+    </div>
+
+    <p class="fade-up d5" style="font-size:12px;color:#374151;text-align:center">You can upgrade your plan at any time. Questions? <a href="index.html#contact" style="color:var(--red);text-decoration:none;font-weight:600">Contact us</a></p>
+
+  </div><!-- /panel-plans -->
+
+</div><!-- /page -->
+
+
+<!-- Continue bar (plan selection) -->
+<div class="continue-bar" id="continue-bar">
+  <div class="continue-info">
+    <div class="label">Selected Plan</div>
+    <div class="value" id="continue-plan-name">—</div>
+  </div>
+  <button class="continue-btn" id="continue-btn" onclick="confirmPlan()">
+    Continue
+    <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </button>
+</div>
+
+<!-- Confirmation overlay -->
+<div id="confirm-overlay">
+  <div class="confirm-card" id="confirm-card">
+    <div class="confirm-icon" id="conf-icon">🎯</div>
+    <div class="confirm-plan-name" id="conf-plan-name">Plan Selected</div>
+    <p class="confirm-sub" id="conf-sub">Your plan has been saved. Here's what happens next to get your portfolio live.</p>
+    <div class="next-steps" id="next-steps-list"></div>
+    <button class="confirm-cta" id="conf-cta" onclick="goNext()">Fund My Account →</button>
+  </div>
+</div>
+
+</body>
+
+<script>
+const userId   = localStorage.getItem('ef_current_user');
+if (!userId) { window.location.href = 'index.html'; }
+const userName = localStorage.getItem('ef_current_name') || 'Investor';
+let selectedPlan = null;
+
+const PLANS = {
+  'accessible': {
+    label:  'Accessible Opportunities',
+    tier:   'Starter',
+    min:    1000,
+    color:  'red',
+    icon:   '📈',
+  },
+  'ai-growth': {
+    label:  'AI Growth Capital',
+    tier:   'AI Growth',
+    min:    5000,
+    color:  'gold',
+    icon:   '🤖',
+  },
+};
+
+/* ══════════════════════════════════
+   STEP 2 — LEGAL AGREEMENTS
+══════════════════════════════════ */
+var CB_IDS = ['cb-terms','cb-risk','cb-privacy','cb-client','cb-aml'];
+
+function checkAgreements() {
+  var checked = CB_IDS.filter(function(id){
+    var el = document.getElementById(id);
+    return el && el.checked;
+  }).length;
+
+  var sigName = (document.getElementById('sig-name').value || '').trim();
+  var allDone = (checked === CB_IDS.length) && sigName.length >= 2;
+
+  var btn = document.getElementById('agree-btn');
+  btn.disabled = !allDone;
+
+  /* Update progress text */
+  var progEl = document.querySelector('.prog-count');
+  if (progEl) progEl.textContent = checked;
+
+  var progDesc = document.getElementById('agree-progress');
+  if (progDesc) {
+    if (checked === CB_IDS.length && sigName.length < 2) {
+      progDesc.innerHTML = '<span class="prog-count">' + checked + '</span> of 5 accepted — please enter your full name to continue';
+    } else if (checked < CB_IDS.length) {
+      progDesc.innerHTML = '<span class="prog-count">' + checked + '</span> of 5 agreements accepted';
+    } else {
+      progDesc.innerHTML = '✓ All agreements accepted — ready to continue';
+      progDesc.style.color = '#19c98a';
+    }
+  }
+}
+
+async function agreeAndContinue() {
+  var name = (document.getElementById('sig-name').value || '').trim();
+  if (!name) { document.getElementById('sig-name').focus(); return; }
+
+  /* Save acceptance to user record in Supabase */
+  if (userId) {
+    await dbUpdateUser(userId, {
+      legal_accepted:    true,
+      legal_accepted_at: new Date().toISOString(),
+      legal_signature:   name,
+    });
+  }
+
+  /* Switch panels */
+  document.getElementById('panel-legal').style.display = 'none';
+  var plansPanel = document.getElementById('panel-plans');
+  plansPanel.style.display = 'flex';
+
+  /* Update step bar — mark 2 done, activate 3 */
+  var s2 = document.getElementById('step-2');
+  s2.className = 'step done';
+  document.getElementById('step-2-num').innerHTML =
+    '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  var s3 = document.getElementById('step-3');
+  s3.className = 'step active';
+
+  /* Update hero copy */
+  document.getElementById('hero-eyebrow').innerHTML =
+    '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Step 3 of 4';
+  document.getElementById('hero-title').innerHTML = 'Choose Your<br><em>Investment Path</em>';
+  document.getElementById('hero-sub').textContent = 'Both plans offer consistent, monthly returns. Pick the one that matches your ambition and capital goals.';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ══════════════════════════════════
+   STEP 3 — PLAN SELECTION
+══════════════════════════════════ */
+function selectPlan(id) {
+  selectedPlan = id;
+  const plan = PLANS[id];
+
+  document.querySelectorAll('.plan-card').forEach(function(c){
+    c.classList.remove('selected','unselected');
+    c.classList.add('unselected');
+  });
+  document.getElementById('card-'+id).classList.remove('unselected');
+  document.getElementById('card-'+id).classList.add('selected');
+
+  document.getElementById('cta-accessible').className = 'plan-cta ' + (id==='accessible' ? 'cta-red' : 'cta-outline-red');
+  document.getElementById('cta-ai-growth').className  = 'plan-cta ' + (id==='ai-growth'  ? 'cta-gold': 'cta-outline-gold');
+
+  var bar  = document.getElementById('continue-bar');
+  var btn  = document.getElementById('continue-btn');
+  var name = document.getElementById('continue-plan-name');
+  name.textContent = plan.label;
+  btn.className = 'continue-btn continue-btn-' + plan.color;
+  bar.classList.add('show');
+}
+
+async function confirmPlan() {
+  if(!selectedPlan) return;
+  const plan = PLANS[selectedPlan];
+
+  if(selectedPlan === 'accessible'){
+    await savePlanToUser(plan);
+    window.location.href = 'opportunities.html';
+    return;
+  }
+
+  await savePlanToUser(plan);
+
+  const isGold = selectedPlan === 'ai-growth';
+  const clr    = isGold ? 'gold' : 'red';
+
+  document.getElementById('conf-icon').className      = 'confirm-icon confirm-icon-' + clr;
+  document.getElementById('conf-icon').textContent    = plan.icon;
+  document.getElementById('conf-plan-name').textContent = plan.label;
+  document.getElementById('conf-sub').textContent     = `Great choice, ${userName.split(' ')[0]}! You're on the ${plan.tier} plan. Complete your funding to go live.`;
+
+  document.getElementById('next-steps-list').innerHTML = `
+    <div class="next-step">
+      <div class="step-n step-n-${clr}">1</div>
+      <div class="step-body">
+        <h4>Send your deposit</h4>
+        <p>Transfer a minimum of $${plan.min.toLocaleString()} to the wallet address provided by your account manager.</p>
+      </div>
+    </div>
+    <div class="next-step">
+      <div class="step-n step-n-${clr}">2</div>
+      <div class="step-body">
+        <h4>Admin confirmation</h4>
+        <p>Our team reviews and confirms receipt within 24 hours. You'll be notified once approved.</p>
+      </div>
+    </div>
+    <div class="next-step">
+      <div class="step-n step-n-${clr}">3</div>
+      <div class="step-body">
+        <h4>Portfolio goes live</h4>
+        <p>Your account activates and returns begin accruing from the first full trading day.</p>
+      </div>
+    </div>`;
+
+  const ctaBtn = document.getElementById('conf-cta');
+  ctaBtn.style.background = isGold ? 'var(--gold)' : 'var(--red)';
+  ctaBtn.style.color      = isGold ? '#000' : '#fff';
+  ctaBtn.style.boxShadow  = isGold ? '0 4px 18px rgba(245,166,35,.3)' : '0 4px 18px rgba(255,51,64,.35)';
+
+  document.getElementById('confirm-overlay').classList.add('show');
+  document.getElementById('continue-bar').classList.remove('show');
+}
+
+async function savePlanToUser(plan){
+  if(!userId) return;
+  await dbUpdateUser(userId, {
+    tier_label:  plan.label,
+    tier_amount: plan.min,
+    plan_key:    selectedPlan,
+  });
+}
+
+function goNext() {
+  window.location.href = 'ai-plans.html';
+}
+
+/* Close confirm overlay on backdrop click */
+document.getElementById('confirm-overlay').addEventListener('click', function(e){
+  if(e.target === this){
+    this.classList.remove('show');
+    document.getElementById('continue-bar').classList.add('show');
+  }
+});
+</script>
+</html>

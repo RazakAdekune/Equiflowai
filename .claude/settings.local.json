@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir \"C:\\\\Users\\\\USER\\\\Desktop\\\\equiflow\\\\.claude\")",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

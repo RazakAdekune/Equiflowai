@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EquiFlow — v2</title>
+
+<!-- Favicons -->
+<link rel="icon" type="image/x-icon" href="images/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="images/favicon-48x48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="images/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="images/android-chrome-512x512.png">
+<meta name="theme-color" content="#000000">
+
+<!-- SEO / Open Graph / Twitter Card -->
+<meta name="description" content="EquiFlow AI — Private market access from $1,000. AI-powered investing across frontier innovation, stocks, crypto, and emerging opportunities.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="EquiFlow AI — Own a Stake in Tomorrow's World">
+<meta property="og:description" content="Private market access from $1,000. AI-powered investing across frontier innovation, stocks, crypto, and emerging opportunities.">
+<meta property="og:image" content="images/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EquiFlow AI — Own a Stake in Tomorrow's World">
+<meta name="twitter:description" content="Private market access from $1,000. AI-powered investing across frontier innovation, stocks, crypto, and emerging opportunities.">
+<meta name="twitter:image" content="images/og-image.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<style>
+  :root{
+    --black:#000000;
+    --ink:#0a0a0a;
+    --panel:#101012;
+    --panel-2:#161618;
+    --light:#f6f6f5;
+    --light-2:#ffffff;
+    --accent:#ff3340;        /* bright hero red */
+    --accent-deep:#d61f2c;   /* eyebrow crimson */
+    --green:#19c98a;
+    --gold:#e7b53c;
+    --gray:#8a8a8e;
+    --gray-2:#b4b4b8;
+    --gray-d:#6b6b70;
+    --line:rgba(255,255,255,.08);
+    --line-d:rgba(0,0,0,.08);
+    --head: 'Montserrat', system-ui, sans-serif;
+    --body: 'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:hidden}
+  body{font-family:var(--body);background:var(--black);color:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+  .eyebrow{font-family:var(--head);font-weight:700;letter-spacing:.28em;font-size:13px;text-transform:uppercase;color:var(--accent-deep)}
+  .h-xxl{font-family:var(--head);font-weight:900;letter-spacing:-.01em;line-height:.98;text-transform:uppercase}
+  .muted{color:var(--gray)}
+  .section{padding:120px 0}
+  .center{text-align:center}
+
+  /* ---------- LIVE TICKERS ---------- */
+  .live-ticker{position:relative;height:42px;display:flex;align-items:center;overflow:hidden;border-bottom:1px solid var(--line);flex-shrink:0}
+  .live-ticker.crypto-bar{background:#07070a}
+  .live-ticker.stocks-bar{background:#040407;border-top:1px solid var(--line)}
+  .t-label{flex-shrink:0;padding:0 14px;font-family:var(--head);font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);border-right:1px solid var(--line);height:100%;display:flex;align-items:center;gap:6px;min-width:86px}
+  .t-label .ldot{width:6px;height:6px;border-radius:50%;animation:blink 1.4s ease-in-out infinite}
+  .crypto-bar .ldot{background:#19c98a}
+  .stocks-bar .ldot{background:#e7b53c}
+  .t-run{flex:1;overflow:hidden;position:relative}
+  .t-run-inner{display:inline-flex;white-space:nowrap;animation:tickRoll 48s linear infinite}
+  .t-item-live{display:inline-flex;align-items:center;gap:6px;padding:0 20px;border-right:1px solid var(--line);height:42px;font-size:12.5px}
+  .t-sym{font-family:var(--head);font-weight:700;color:#fff;font-size:11.5px;letter-spacing:.05em}
+  .t-price{color:var(--gray-2)}
+  .t-chg{font-weight:600;font-size:11.5px}
+  .t-chg.up{color:#19c98a}
+  .t-chg.down{color:var(--accent)}
+  @keyframes tickRoll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- NAV ---------- */
+  .nav-wrap{position:sticky;top:0;z-index:100;background:#000;border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;max-width:1304px;margin:0 auto}
+  .brand{font-family:var(--head);font-weight:800;letter-spacing:.22em;font-size:20px}
+  .brand .red{color:var(--accent)}
+  .nav-links{display:flex;gap:38px;font-size:15px;color:var(--gray-2)}
+  .nav-links a:hover{color:#fff}
+  .nav-right{display:flex;align-items:center;gap:22px}
+  .btn{font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.04em;border-radius:40px;padding:13px 26px;cursor:pointer;border:1px solid transparent;transition:.2s}
+  .btn-ghost{border-color:rgba(255,255,255,.25);color:#fff;background:transparent}
+  .btn-ghost:hover{background:rgba(255,255,255,.08)}
+  .btn-white{background:#fff;color:#000}
+  .btn-white:hover{opacity:.88}
+  .btn-red{background:var(--accent);color:#fff}
+  .btn-red:hover{opacity:.9}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;min-height:760px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+  .hero::after{content:"";position:absolute;inset:0;z-index:3;background:radial-gradient(60% 55% at 50% 42%,rgba(255,90,60,.18),transparent 70%);pointer-events:none}
+  .hero-inner{position:relative;z-index:5;max-width:1000px;padding:120px 24px 150px}
+
+  /* hero image slideshow */
+  .hero-slides{position:absolute;inset:0;z-index:0}
+  .hero-slide{position:absolute;inset:0;background-size:cover;background-position:center 32%;opacity:0;animation:heroFade 20s infinite;animation-fill-mode:both}
+  .hero-slide:nth-child(1){animation-delay:0s}
+  .hero-slide:nth-child(2){animation-delay:5s}
+  .hero-slide:nth-child(3){animation-delay:10s}
+  .hero-slide:nth-child(4){animation-delay:15s}
+  @keyframes heroFade{0%{opacity:0}8%{opacity:1}25%{opacity:1}33%{opacity:0}100%{opacity:0}}
+  .pill{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.22);border-radius:40px;padding:10px 22px;font-family:var(--head);font-weight:600;font-size:13px;letter-spacing:.18em;color:var(--gray-2);text-transform:uppercase;margin-bottom:38px}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .hero h1{font-family:var(--head);font-weight:900;text-transform:uppercase;line-height:.95;letter-spacing:-.01em;font-size:clamp(44px,7.4vw,104px)}
+  .hero h1 .red{color:var(--accent);display:block}
+  .hero p{max-width:680px;margin:34px auto 0;color:var(--gray-2);font-size:19px;line-height:1.6}
+
+  /* hero SVG scene + overlay veil */
+  .hero-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover}
+  .hero-veil{position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,.30) 0%,rgba(0,0,0,.45) 45%,rgba(0,0,0,.85) 80%,#000 100%)}
+  @keyframes twinkle{0%,100%{opacity:.25}50%{opacity:.9}}
+  @keyframes plumePulse{0%,100%{opacity:.85;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.06)}}
+
+
+  /* ---------- STEPS (light) ---------- */
+  .light-sec{background:#f5f5f4;color:#0a0a0a}
+  .light-sec .muted{color:#6f6f73}
+  .steps-head{margin-bottom:64px}
+  .steps-head .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.26em;margin-bottom:20px}
+  .steps-head h2{font-size:clamp(42px,6.5vw,88px);line-height:.97;text-align:left}
+  .steps-head .l1{color:#0a0a0a;display:block}
+  .steps-head .l2{color:#c0c0c4;display:block}
+  .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .step-card{background:#fff;border-radius:18px;padding:44px 36px 40px;border:1px solid rgba(0,0,0,.06)}
+  .step-card .num{font-family:var(--head);font-weight:900;font-size:72px;color:#d0d0d4;line-height:1;margin-bottom:12px}
+  .step-card .uline{width:40px;height:3px;background:var(--accent);border-radius:2px;margin-bottom:24px}
+  .step-card h3{font-family:var(--head);font-weight:800;font-size:22px;color:#0a0a0a;margin-bottom:18px}
+  .step-card ul{list-style:none}
+  .step-card li{position:relative;padding-left:16px;margin-bottom:13px;color:#56565b;font-size:15px;line-height:1.55}
+  .step-card li::before{content:"•";position:absolute;left:0;top:0;color:var(--accent);font-size:18px;line-height:1.3}
+
+  /* ---------- ECOSYSTEM — Musk Portfolio (dark) ---------- */
+  .eco{background:#050505}
+  .eco .eco-eyebrow{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  .eco h2{font-size:clamp(44px,6.8vw,96px);line-height:.95;margin-bottom:28px}
+  .eco h2 .l1{color:#fff;display:block}
+  .eco h2 .l2{color:#3a3a3e;display:block}
+  .eco .lead{max-width:680px;color:#aaaaae;font-size:17px;line-height:1.7;margin-bottom:0}
+  .eco-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:66px}
+  .eco-card{background:#0d0d0f;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:30px 28px;transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s cubic-bezier(.22,1,.36,1),border-color .25s;display:flex;flex-direction:column;will-change:transform}
+  .eco-card:hover{border-color:rgba(255,255,255,.18);transform:translateY(-5px);box-shadow:0 20px 48px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.1)}
+  .eco-card.open{border-color:rgba(255,51,64,.3);background:linear-gradient(160deg,rgba(255,51,64,.07),#0d0d0f 55%)}
+  .tag-open{font-family:var(--head);font-weight:700;font-size:10.5px;letter-spacing:.2em;color:var(--green);display:flex;align-items:center;gap:7px;margin-bottom:18px;text-transform:uppercase}
+  .tag-open .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+  .eco-card .co-name{font-family:var(--head);font-weight:800;font-size:26px;color:#fff;line-height:1.15;margin-bottom:14px}
+  .eco-card .co-name .tk{font-family:var(--head);font-weight:600;font-size:11.5px;letter-spacing:.12em;color:#4a4a50;margin-left:10px;vertical-align:middle}
+  .eco-card p{color:#7a7a80;font-size:14.5px;line-height:1.65;margin-top:auto}
+
+  /* ---------- FEATURED (investment cards) ---------- */
+  .feat{background:#070708}
+  .feat-top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
+  .feat .lbl{display:flex;align-items:center;gap:14px;color:var(--gray-d);font-family:var(--head);font-weight:700;letter-spacing:.22em;font-size:12px;text-transform:uppercase}
+  .feat .lbl .ln{width:34px;height:1px;background:var(--gray-d)}
+  .feat h2{font-size:clamp(40px,5.6vw,76px);margin-top:18px}
+  .feat h2 .l1{color:#fff}.feat h2 .l2{color:#5a5a5e}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+
+  /* card shell */
+  .fc{background:#111114;border:1px solid rgba(255,255,255,.09);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1),border-color .25s;will-change:transform}
+  .fc:hover{border-color:rgba(255,255,255,.2);transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1)}
+  .fc .thumb{transition:transform .6s cubic-bezier(.22,1,.36,1)}
+  .fc:hover .thumb{transform:scale(1.04)}
+
+  /* image area */
+  .fc .thumb{height:220px;position:relative;background-size:cover;background-position:center}
+  .fc .thumb-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.55) 100%)}
+  .fc .thumb-pills{position:absolute;inset:16px 16px auto 16px;display:flex;justify-content:space-between;align-items:flex-start}
+
+  /* category pill */
+  .cat-pill{font-family:var(--head);font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:7px 13px;border-radius:30px}
+  .cp1{background:var(--gold);color:#000}
+  .cp2{background:#1a1635;color:#8b9bff;border:1px solid rgba(139,155,255,.5)}
+  .cp3{background:var(--accent);color:#fff}
+
+  /* live pill */
+  .live-pill{font-family:var(--head);font-weight:700;font-size:10.5px;letter-spacing:.1em;color:#fff;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:30px;background:rgba(10,40,28,.85);border:1px solid rgba(25,201,138,.55)}
+  .live-pill .ldot2{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.4s ease-in-out infinite}
+
+  /* card body */
+  .fc .body{padding:26px 24px 24px;display:flex;flex-direction:column;flex:1}
+  .fc h3{font-family:var(--head);font-weight:800;font-size:19px;color:#fff;margin-bottom:8px;line-height:1.25}
+  .fc .desc{color:#7a7a80;font-size:13.5px;line-height:1.55;margin-bottom:22px}
+
+  /* stats row */
+  .fc .stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.07);padding-top:18px;margin-bottom:18px}
+  .fc .stat{padding-right:14px}
+  .fc .stat+.stat{padding-left:14px;border-left:1px solid rgba(255,255,255,.07)}
+  .fc .stat .sv{font-family:var(--head);font-weight:800;font-size:18px;color:#fff;line-height:1.1}
+  .fc .stat .sk{font-size:10px;letter-spacing:.13em;color:#5a5a60;text-transform:uppercase;margin-top:5px}
+  .sv.y1{color:var(--gold)} .sv.y2{color:#8b9bff} .sv.y3{color:var(--accent)}
+
+  /* progress */
+  .fc .prog{margin-bottom:20px}
+  .fc .prog-meta{display:flex;justify-content:space-between;font-size:11.5px;color:#5a5a60;margin-bottom:7px}
+  .fc .prog-track{height:4px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+  .fc .prog-fill{height:100%;border-radius:4px}
+  .pf1{width:18%;background:var(--gold)} .pf2{width:43%;background:#8b9bff} .pf3{width:46%;background:var(--accent)}
+  .cp4{background:#0d2b1f;color:#19c98a;border:1px solid rgba(25,201,138,.4)}
+  .cp5{background:#1e1128;color:#c084fc;border:1px solid rgba(192,132,252,.4)}
+  .cp6{background:#0c1f36;color:#60a5fa;border:1px solid rgba(96,165,250,.4)}
+  .sv.y4{color:#19c98a} .sv.y5{color:#c084fc} .sv.y6{color:#60a5fa}
+  .pf4{width:12%;background:#19c98a} .pf5{width:31%;background:#c084fc} .pf6{width:62%;background:#60a5fa}
+  .feat-extra{display:none;margin-top:24px}
+  .feat-extra.open{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media(max-width:900px){.feat-extra.open{grid-template-columns:1fr}}
+
+  /* cta row */
+  .fc .cta-row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding-top:18px}
+  .fc .cta-row .view{font-size:12.5px;color:#5a5a60}
+  .fc .invest-btn{font-family:var(--head);font-weight:800;font-size:12.5px;letter-spacing:.07em;display:inline-flex;align-items:center;gap:5px;cursor:pointer;transition:opacity .15s}
+  .fc .invest-btn:hover{opacity:.75}
+  .ib1{color:var(--gold)} .ib2{color:#8b9bff} .ib3{color:var(--accent)}
+
+  /* ---------- PLANS — AI Capital Tiers ---------- */
+  .plans{background:#050505}
+  .plans .head-eyebrow{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:26px}
+  .plans .big-title{font-family:var(--head);font-weight:900;text-transform:uppercase;line-height:1;letter-spacing:-.01em;font-size:clamp(38px,5.8vw,88px)}
+  .plans .big-title .w1{color:#fff;display:block}
+  .plans .big-title .w2{color:#3a3a3e;display:block}
+  .plans .lead{max-width:600px;margin:28px auto 0;color:var(--gray);font-size:16px;line-height:1.7}
+  .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:70px}
+  .plan{background:#0d0d0f;border-radius:18px;padding:38px 34px 34px;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.05);transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1),border-color .25s;will-change:transform;cursor:default}
+  .plan:hover{border-color:rgba(255,255,255,.14);transform:translateY(-6px);box-shadow:0 28px 64px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08)}
+  .plan h3{font-family:var(--head);font-weight:800;font-size:22px;color:#fff;margin-bottom:6px}
+  .plan .cap-range{color:var(--gray);font-size:14px;margin-bottom:28px}
+  .plan .ret-label{font-family:var(--head);font-weight:700;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#4a4a50;margin-bottom:10px}
+  .plan .ret-num{font-family:var(--head);font-weight:900;font-size:clamp(28px,3vw,42px);color:#fff;line-height:1;margin-bottom:14px;letter-spacing:-.02em}
+  .plan .ret-desc{color:#5a5a60;font-size:13.5px;line-height:1.55;margin-bottom:22px}
+  .plan .exec{font-family:var(--head);font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#4a4a50;margin-bottom:22px}
+  .plan .exec b{color:#fff;font-size:14px;letter-spacing:0}
+  .plan .divider{height:1px;background:rgba(255,255,255,.07);margin-bottom:22px}
+  .plan .plan-desc{color:#7a7a80;font-size:14px;line-height:1.65;margin-bottom:22px}
+  .plan ul{list-style:none;margin-bottom:32px}
+  .plan li{position:relative;padding-left:18px;margin-bottom:12px;color:#8a8a90;font-size:14px;line-height:1.5}
+  .plan li::before{content:"•";position:absolute;left:0;top:0;color:var(--accent);font-size:16px;line-height:1.4}
+  .plan .activate-btn{margin-top:auto;display:block;width:100%;padding:17px;text-align:center;font-family:var(--head);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#1a1a1e;border:1px solid rgba(255,255,255,.12);border-radius:50px;cursor:pointer;transition:.2s}
+  .plan .activate-btn:hover{background:#252528;border-color:rgba(255,255,255,.25)}
+
+  /* ---------- METHOD — Risk Architecture (light) ---------- */
+  .method .eyebrow{color:var(--accent);letter-spacing:.26em}
+  .method h2{font-size:clamp(40px,6vw,88px);line-height:.97}
+  .method .l1{color:#0a0a0a;display:block}.method .l2{color:#c0c0c4;display:block}
+  .method .lead{max-width:680px;margin:26px auto 0;color:#8a8a8e;font-size:17px;line-height:1.7;text-align:center}
+  .method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:64px}
+  .mcard{background:#fff;border-radius:18px;padding:38px 28px 36px;border:1px solid rgba(0,0,0,.06)}
+  .mcard .num{font-family:var(--head);font-weight:900;font-size:52px;color:#d4d4d8;line-height:1;margin-bottom:14px}
+  .mcard h3{font-family:var(--head);font-weight:800;font-size:19px;color:#0a0a0a;margin-bottom:0;line-height:1.25}
+  .mcard .uline{width:36px;height:3px;background:var(--accent);border-radius:2px;margin:14px 0 18px}
+  .mcard p{color:#6a6a70;font-size:14px;line-height:1.65}
+
+
+  /* ---------- CTA (dark) ---------- */
+  .cta{background:radial-gradient(80% 90% at 50% 10%,#1a1a1c,#000 80%);text-align:center}
+  .cta h2{font-size:clamp(44px,7vw,96px)}
+  .cta .l1{color:#fff}.cta .l2{color:#5a5a5e;display:block}
+  .cta .lead{max-width:720px;margin:34px auto 0;color:var(--gray-2);font-size:18px;line-height:1.65}
+  .cta .btns{display:flex;gap:18px;justify-content:center;margin-top:46px;flex-wrap:wrap}
+  .cta .btn{padding:18px 38px;font-size:15px}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:#000;border-top:1px solid var(--line);padding:90px 0 50px}
+  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px}
+  .foot-brand .brand{font-size:22px;margin-bottom:18px;display:inline-block}
+  .foot-brand p{color:var(--gray-d);font-size:14.5px;line-height:1.6;max-width:280px}
+  .fcol h5{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--gray-d);text-transform:uppercase;margin-bottom:22px}
+  .fcol a{display:block;color:var(--gray-2);font-size:15px;margin-bottom:16px}
+  .fcol a:hover{color:#fff}
+  .disclaimer{margin-top:60px;padding-top:30px;border-top:1px solid var(--line);color:var(--gray-d);font-size:12.5px;line-height:1.7;max-width:900px}
+  .disclaimer b{color:var(--gray-2)}
+  .foot-bottom{margin-top:26px;color:#4a4a4e;font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  /* ---------- SCROLL REVEAL ---------- */
+  .reveal{opacity:0;transform:translateY(40px);transition:opacity .75s cubic-bezier(.22,1,.36,1),transform .75s cubic-bezier(.22,1,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal.from-left{transform:translateX(-40px)}
+  .reveal.from-right{transform:translateX(40px)}
+  .reveal.from-left.in,.reveal.from-right.in{transform:none}
+  .reveal.d1{transition-delay:.07s}
+  .reveal.d2{transition-delay:.14s}
+  .reveal.d3{transition-delay:.21s}
+  .reveal.d4{transition-delay:.28s}
+  .reveal.d5{transition-delay:.35s}
+  .reveal.d6{transition-delay:.42s}
+  .nav-links a{position:relative}
+  .nav-links a::after{content:'';position:absolute;left:0;bottom:-3px;width:0;height:1.5px;background:#fff;transition:width .28s cubic-bezier(.22,1,.36,1)}
+  .nav-links a:hover::after{width:100%}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1 !important;transform:none !important;transition:none !important}
+  }
+
+  /* ---------- SECTION EDGE FADES ---------- */
+  /* sections sit relative so we can drop gradient veils at their seams */
+  .section,.hero,footer{position:relative}
+  .fade-top,.fade-bottom{position:absolute;left:0;right:0;height:120px;pointer-events:none;z-index:4}
+  .fade-top{top:0}
+  .fade-bottom{bottom:0}
+  .fade-dark-top{background:linear-gradient(to bottom,#000,transparent)}
+  .fade-dark-bottom{background:linear-gradient(to top,#000,transparent)}
+  .fade-light-top{background:linear-gradient(to bottom,#fff,transparent)}
+  .fade-light-bottom{background:linear-gradient(to top,#f3f3f2,transparent)}
+
+  /* ---------- hamburger + mobile nav ---------- */
+  .nav-hamburger{display:none;width:40px;height:40px;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:#fff;flex-shrink:0;transition:.2s}
+  .nav-hamburger:hover{background:rgba(255,255,255,.14)}
+  .nav-hamburger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+  .mobile-nav{display:none;flex-direction:column;position:absolute;left:0;right:0;top:100%;background:rgba(3,3,5,.98);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.08);padding:12px 16px 20px;z-index:99;gap:2px}
+  .mobile-nav.open{display:flex;animation:mnIn .2s cubic-bezier(.22,1,.36,1)}
+  @keyframes mnIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .mn-link{display:block;padding:13px 16px;border-radius:10px;font-size:15px;font-weight:600;color:#b4b4b8;text-decoration:none;transition:background .14s,color .14s}
+  .mn-link:hover{background:rgba(255,255,255,.06);color:#fff}
+  .mn-divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
+  .mn-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .mn-btn{padding:13px 8px;text-align:center;border-radius:10px;font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.15s;text-decoration:none;display:block;border:none;font-family:var(--head)}
+  .mn-btn-ghost{color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+  .mn-btn-ghost:hover{background:rgba(255,255,255,.14)}
+  .mn-btn-red{color:#fff;background:var(--accent)}
+  .mn-btn-red:hover{opacity:.88}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:980px){
+    .nav-links{display:none}
+    .nav-hamburger{display:flex}
+    .nav-right .muted{display:none}
+    .nav-right .btn{display:none}
+    .steps-grid,.eco-grid,.feat-grid,.plans-grid{grid-template-columns:1fr}
+    .method-grid{grid-template-columns:repeat(2,1fr)}
+    .foot-grid{grid-template-columns:1fr 1fr}
+    .section{padding:80px 0}
+  }
+  @media(max-width:767px){
+    .hero{min-height:580px}
+    .hero-inner{padding:70px 20px 90px}
+    .hero p{font-size:16px}
+    .pill{font-size:11px;padding:8px 16px;margin-bottom:24px;letter-spacing:.12em}
+  }
+  @media(max-width:560px){
+    .wrap{padding:0 18px}
+    .method-grid,.foot-grid{grid-template-columns:1fr}
+    .nav{padding:14px 18px}
+    .hero{min-height:500px}
+    .hero-inner{padding:56px 16px 80px}
+    .hero p{font-size:15px;line-height:1.55}
+    .feat-top{flex-direction:column;align-items:flex-start;gap:16px}
+    .feat-top .btn{width:100%;text-align:center}
+  }
+  @media(max-width:440px){
+    .brand{font-size:17px;letter-spacing:.14em}
+  }
+
+  /* ---------- WAITLIST MODAL ---------- */
+  .modal-overlay{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.8);backdrop-filter:blur(10px);padding:20px;overflow-y:auto}
+  .modal-overlay.open{display:flex;animation:ovIn .28s ease}
+  @keyframes ovIn{from{opacity:0}to{opacity:1}}
+  .modal-card{position:relative;width:100%;max-width:420px;margin:auto;
+    background:linear-gradient(160deg,#161618 0%,#0c0c0e 100%);
+    border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:40px 36px 36px;
+    box-shadow:0 40px 80px -10px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.05);
+    animation:cardIn .4s cubic-bezier(.22,1,.36,1);text-align:center}
+  @keyframes cardIn{from{transform:translateY(36px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+  .modal-x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#8a8a8e;
+    font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .modal-x:hover{background:rgba(255,255,255,.12);color:#fff}
+  .wl-icon{width:52px;height:52px;border-radius:14px;background:rgba(255,51,64,.08);
+    border:1px solid rgba(255,51,64,.18);display:flex;align-items:center;justify-content:center;
+    margin:0 auto 18px;font-size:22px}
+  .modal-card h2{font-family:var(--head);font-weight:900;font-size:24px;color:#fff;
+    letter-spacing:-.01em;margin-bottom:8px;text-transform:uppercase;line-height:1.1}
+  .wl-sub{color:#8a8a8e;font-size:14px;line-height:1.65;margin-bottom:20px}
+  .wl-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left}
+  .wl-perk{display:flex;align-items:center;gap:11px;font-size:13.5px;color:#b4b4b8;line-height:1.45}
+  .wl-check{width:18px;height:18px;border-radius:50%;background:rgba(25,201,138,.1);
+    border:1px solid rgba(25,201,138,.3);display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:10px;color:#19c98a}
+  .wl-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;padding:14px 18px;color:#fff;font-family:var(--body);font-size:15px;
+    outline:none;transition:.25s;text-align:center}
+  .wl-input::placeholder{color:#4a4a52}
+  .wl-input:focus{border-color:rgba(255,51,64,.5);background:rgba(255,255,255,.06);
+    box-shadow:0 0 0 3px rgba(255,51,64,.1)}
+  .wl-btn{margin-top:10px;width:100%;background:var(--accent);color:#fff;border:none;
+    border-radius:40px;padding:16px;font-family:var(--head);font-weight:700;font-size:13px;
+    letter-spacing:.08em;cursor:pointer;transition:box-shadow .2s,opacity .2s,transform .15s;
+    text-transform:uppercase}
+  .wl-btn:hover{box-shadow:0 0 0 4px rgba(255,51,64,.22);opacity:.93}
+  .wl-btn:active{transform:scale(.98)}
+  .wl-fine{margin-top:12px;color:#3a3a42;font-size:11.5px;line-height:1.5}
+  .wl-success{display:none;flex-direction:column;align-items:center;gap:12px}
+  .wl-success-icon{font-size:52px;line-height:1}
+  .wl-success h3{font-family:var(--head);font-weight:800;font-size:22px;color:#fff;text-transform:uppercase}
+  .wl-success p{color:#8a8a8e;font-size:14.5px;line-height:1.65;max-width:300px}
+  .li-field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .li-field label{font-family:var(--head);font-weight:700;font-size:11px;letter-spacing:.16em;color:#6b6b70;text-transform:uppercase;text-align:left}
+  .li-field input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 18px;color:#fff;font-family:var(--body);font-size:15px;outline:none;transition:.25s;width:100%}
+  .li-field input::placeholder{color:#4a4a52}
+  .li-field input:focus{border-color:rgba(255,51,64,.5);background:rgba(255,255,255,.06);box-shadow:0 0 0 3px rgba(255,51,64,.1)}
+  .li-pw-wrap{position:relative}
+  .li-pw-wrap input{padding-right:60px}
+  .li-pw-toggle{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--head);font-weight:700;font-size:11px;letter-spacing:.1em;color:#6b6b70;background:none;border:none;cursor:pointer}
+  .li-pw-toggle:hover{color:#fff}
+  .li-forgot{display:block;text-align:right;color:#6b6b70;font-size:13px;margin-top:-8px;margin-bottom:24px}
+  .li-forgot:hover{color:#fff}
+  .li-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:40px;padding:18px;font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:.08em;cursor:pointer;transition:box-shadow .2s,opacity .2s,transform .15s;text-transform:uppercase;margin-top:4px}
+  .li-btn:hover{box-shadow:0 0 0 4px rgba(255,51,64,.22);opacity:.93}
+  .li-btn:active{transform:scale(.98)}
+  .li-switch{margin-top:20px;color:#6b6b70;font-size:13.5px;text-align:center}
+  .li-switch button{background:none;border:none;color:#ff3340;font-weight:700;font-size:13.5px;cursor:pointer;font-family:var(--body);padding:0}
+  .li-switch button:hover{opacity:.8}
+  @media(max-width:500px){.modal-card{padding:40px 22px 34px}.modal-card h2{font-size:24px}}
+
+  /* INVESTOR TESTIMONIALS */
+  .testi-sec{background:#f0f0ee;padding:120px 0}
+  .testi-sec .testi-ey{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#ff3340;margin-bottom:22px}
+  .testi-sec .testi-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(40px,6vw,86px);text-transform:uppercase;line-height:.97;margin-bottom:26px}
+  .testi-sec .testi-title .tw1{display:block;color:#0a0a0a}
+  .testi-sec .testi-title .tw2{display:block;color:#c2c2c6}
+  .testi-sec .testi-sub{max-width:640px;margin:0 auto;color:#8a8a8e;font-size:17px;line-height:1.7;text-align:center}
+  .testi-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin:64px 0 52px;text-align:center}
+  .testi-stats .tsv{font-family:'Montserrat',sans-serif;font-weight:900;font-size:46px;color:#0a0a0a;line-height:1;display:block}
+  .testi-stats .tsk{display:block;font-size:11px;letter-spacing:.18em;color:#9a9a9e;text-transform:uppercase;margin-top:10px}
+  .testi-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .testi-card{background:#fff;border-radius:18px;padding:34px 30px 30px;border:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1),border-color .25s;will-change:transform}
+  .testi-card:hover{transform:translateY(-6px);box-shadow:0 24px 56px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.1);border-color:rgba(0,0,0,.14)}
+  .testi-card .tc-q{font-family:Georgia,serif;font-size:56px;color:#f0b4b8;line-height:.65;display:block;margin-bottom:18px}
+  .testi-card .tc-stars{color:#e7b53c;font-size:15px;letter-spacing:2px;display:block;margin-bottom:16px}
+  .testi-card .tc-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:17px;color:#0a0a0a;margin-bottom:12px}
+  .testi-card .tc-body{color:#5a5a5e;font-size:14.5px;line-height:1.65;margin-bottom:24px}
+  .testi-card .tc-who{display:flex;align-items:center;gap:12px;margin-top:auto}
+  .testi-card .tc-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#ff6b52,#d61f2c);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+  .testi-card .tc-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;color:#0a0a0a}
+  .testi-card .tc-role{font-size:12px;color:#8a8a8e;margin-top:2px}
+  @media(max-width:900px){.testi-cards{grid-template-columns:1fr}.testi-stats{grid-template-columns:repeat(2,1fr)}}
+  .vid-carousel-wrap{position:relative;margin-top:72px}
+  .vid-carousel-label{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#ff3340;margin-bottom:28px;text-align:center}
+  .vid-carousel{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:8px}
+  .vid-carousel::-webkit-scrollbar{display:none}
+  .vid-item{flex:0 0 280px;scroll-snap-align:start;text-align:center}
+  .vid-item{position:relative}
+  .vid-thumb{position:relative;width:100%;height:380px;border-radius:16px;overflow:hidden;background:#111;cursor:pointer}
+  .vid-thumb video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+  .vid-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .vid-play-btn{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;transition:.2s}
+  .vid-thumb:hover .vid-play-btn{background:rgba(255,255,255,.32);transform:scale(1.08)}
+  .vid-play-btn svg{fill:#fff;width:22px;height:22px;margin-left:4px}
+  .vid-item .vid-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;color:#0a0a0a;margin-top:14px}
+  .vid-item .vid-role{font-size:12px;color:#9a9a9e;margin-top:4px;letter-spacing:.06em}
+  .vid-nav{display:flex;justify-content:center;gap:12px;margin-top:28px}
+  .vid-btn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:#fff;color:#0a0a0a;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1}
+  .vid-btn:hover{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+  #vidOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center}
+  #vidOverlay video{max-width:90vw;max-height:88vh;width:auto;height:auto;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  #vidCloseBtn{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;backdrop-filter:blur(4px)}
+  #vidCloseBtn:hover{background:rgba(255,255,255,.22)}
+
+  /* GIVEAWAY */
+  .giveaway-sec{position:relative;background:#0a0a0a;padding:130px 0;overflow:hidden}
+  .gw-glow{position:absolute;top:-220px;right:-120px;width:740px;height:740px;border-radius:50%;background:radial-gradient(circle,rgba(255,51,64,.13),transparent 62%);pointer-events:none}
+  .gw-glow-2{position:absolute;bottom:-180px;left:-80px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(231,181,60,.06),transparent 65%);pointer-events:none}
+  .gw-inner{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+  .gw-ey{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#ff3340;margin-bottom:24px}
+  .gw-title{font-family:'Montserrat',sans-serif;font-weight:900;text-transform:uppercase;line-height:.92;margin-bottom:26px;font-size:clamp(52px,6.5vw,96px)}
+  .gw-title .ga{color:#fff;display:block}
+  .gw-title .gb{color:#ff3340;display:block}
+  .gw-desc{color:#8a8a8e;font-size:16px;line-height:1.7;max-width:480px;margin-bottom:44px}
+  .gw-steps{display:flex;flex-direction:column;gap:22px;margin-bottom:48px}
+  .gw-step{display:flex;align-items:flex-start;gap:18px}
+  .gw-step-num{font-family:'Montserrat',sans-serif;font-weight:800;font-size:10px;letter-spacing:.16em;color:#ff3340;background:rgba(255,51,64,.08);border:1px solid rgba(255,51,64,.18);border-radius:8px;padding:7px 11px;flex-shrink:0;margin-top:1px}
+  .gw-step-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;color:#fff;margin-bottom:4px}
+  .gw-step-desc{font-size:13.5px;color:#6b6b70;line-height:1.55}
+  .gw-cta{font-size:15px;padding:16px 34px;display:inline-flex;align-items:center;gap:10px;font-family:'Montserrat',sans-serif;font-weight:700;letter-spacing:.04em;border-radius:40px;background:#ff3340;color:#fff;border:none;cursor:pointer;transition:.2s}
+  .gw-cta:hover{opacity:.88;transform:translateY(-1px)}
+  .gw-right{display:flex;flex-direction:column;gap:14px}
+  .gw-card{background:#141416;border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:36px;position:relative;overflow:hidden}
+  .gw-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#ff3340,#ff7052,transparent)}
+  .gw-badge{display:inline-flex;align-items:center;gap:6px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#ff3340;border:1px solid rgba(255,51,64,.3);border-radius:20px;padding:5px 14px;margin-bottom:24px;background:rgba(255,51,64,.06)}
+  .gw-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:#ff3340;animation:pulse 2s ease-in-out infinite}
+  .gw-car-img{position:relative;border-radius:14px;overflow:hidden;margin-bottom:22px;background:#0a0a0a}
+  .gw-car-img img{width:100%;height:220px;object-fit:cover;display:block;opacity:.9}
+  .gw-car-caption{position:absolute;bottom:0;left:0;right:0;padding:18px 20px;background:linear-gradient(transparent,rgba(0,0,0,.75))}
+  .gw-car-name{font-family:'Montserrat',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:4px}
+  .gw-car-val{font-size:12.5px;color:rgba(255,255,255,.65)}
+  .gw-car-val span{color:#ff3340;font-weight:600}
+  .gw-draw-row{display:flex;align-items:center;gap:10px;font-size:13.5px;color:#8a8a8e;margin-bottom:16px}
+  .gw-rdot{width:8px;height:8px;border-radius:50%;background:#ff3340;box-shadow:0 0 10px rgba(255,51,64,.55);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 10px rgba(255,51,64,.55)}50%{box-shadow:0 0 22px rgba(255,51,64,.9)}}
+  .gw-eligible{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#8a8a8e;line-height:1.55;padding:13px;background:rgba(25,201,138,.04);border:1px solid rgba(25,201,138,.14);border-radius:10px;margin-bottom:18px}
+  .gw-eligible strong{color:#19c98a}
+  .gw-winner{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,.03);border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+  .gw-wn-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#19c98a,#0ea570);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+  .gw-wn-name{font-family:'Montserrat',sans-serif;font-weight:600;font-size:13.5px;color:#fff}
+  .gw-wn-name span{color:#19c98a}
+  .gw-wn-date{font-size:12px;color:#6b6b70;margin-top:2px}
+  .gw-countdown{background:#141416;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .gw-cd-label{font-family:'Montserrat',sans-serif;font-weight:700;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#6b6b70;white-space:nowrap}
+  .gw-cd-boxes{display:flex;align-items:center;gap:6px}
+  .gw-cd-box{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:9px 12px;min-width:52px}
+  .gw-cd-box span:first-child{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;color:#fff;line-height:1}
+  .gw-cd-box span:last-child{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6b6b70}
+  .gw-cd-sep{font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;color:rgba(255,255,255,.18);margin-bottom:12px}
+  @media(max-width:900px){.gw-inner{grid-template-columns:1fr;gap:48px}.gw-right{order:-1}}
+
+  /* FAQ */
+  .faq-sec{background:#f0f0ee;padding:120px 0}
+  .faq-sec .faq-ey{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#ff3340;margin-bottom:20px}
+  .faq-sec .faq-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(38px,5vw,72px);text-transform:uppercase;line-height:.95;color:#0a0a0a;margin-bottom:16px}
+  .faq-sec .faq-title span{color:#c2c2c6}
+  .faq-sec .faq-sub{color:#8a8a8e;font-size:16px;line-height:1.65;max-width:520px;margin-bottom:64px}
+  .faq-list{display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(0,0,0,.1)}
+  .faq-item{border-bottom:1px solid rgba(0,0,0,.1)}
+  .faq-q{width:100%;background:none;border:none;text-align:left;padding:26px 0;display:flex;align-items:center;justify-content:space-between;gap:24px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;color:#0a0a0a;line-height:1.35}
+  .faq-q:hover{color:#ff3340}
+  .faq-icon{width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;color:#8a8a8e;transition:.2s;line-height:1}
+  .faq-item.open .faq-icon{background:#ff3340;border-color:#ff3340;color:#fff;transform:rotate(45deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .25s ease}
+  .faq-item.open .faq-a{max-height:300px}
+  .faq-a-inner{padding:0 0 26px;color:#6b6b70;font-size:15px;line-height:1.7;max-width:720px}
+
+  /* CONTACT */
+  .contact-sec{background:#0a0a0a;padding:120px 0}
+  .contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+  .contact-ey{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#ff3340;margin-bottom:20px}
+  .contact-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(38px,5vw,68px);text-transform:uppercase;line-height:.95;color:#fff;margin-bottom:18px}
+  .contact-title span{color:rgba(255,255,255,.18)}
+  .contact-desc{color:#8a8a8e;font-size:16px;line-height:1.7;margin-bottom:0}
+  .contact-cards{display:flex;flex-direction:column;gap:16px}
+  .contact-card{background:#141416;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:28px 28px 28px 26px;display:flex;align-items:center;gap:20px;text-decoration:none;transition:.2s;position:relative;overflow:hidden}
+  .contact-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px}
+  .contact-card.tg::before{background:#26a5e4}
+  .contact-card.gm::before{background:#ff3340}
+  .contact-card:hover{border-color:rgba(255,255,255,.14);transform:translateX(4px)}
+  .contact-card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .contact-card.tg .contact-card-icon{background:rgba(38,165,228,.12)}
+  .contact-card.gm .contact-card-icon{background:rgba(255,51,64,.1)}
+  .contact-card-text{}
+  .contact-card-label{font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .contact-card.tg .contact-card-label{color:#26a5e4}
+  .contact-card.gm .contact-card-label{color:#ff3340}
+  .contact-card-handle{font-family:'Montserrat',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:5px}
+  .contact-card-note{font-size:13px;color:#6b6b70}
+  .contact-card-arrow{margin-left:auto;color:rgba(255,255,255,.2);font-size:20px;flex-shrink:0;transition:.2s}
+  .contact-card:hover .contact-card-arrow{color:#fff;transform:translateX(3px)}
+  @media(max-width:860px){.contact-inner{grid-template-columns:1fr;gap:44px}}
+
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="nav-wrap">
+    <nav class="nav">
+      <div class="brand">EQUIFLOW <span class="red">AI</span></div>
+      <div class="nav-links">
+        <a href="#steps">How It Works</a>
+        <a href="#featured">Opportunities</a>
+        <a href="#plans">Plans</a>
+      </div>
+      <div class="nav-right">
+        <a href="#" class="muted" onclick="showModal('login');return false;">Log in</a>
+        <button class="btn btn-ghost" onclick="showModal('waitlist')">Get Started</button>
+        <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+          <svg id="hbg-icon" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </nav>
+    <!-- Mobile nav drawer -->
+    <div class="mobile-nav" id="mobile-nav">
+      <a class="mn-link" href="#steps" onclick="closeMobileNav()">How It Works</a>
+      <a class="mn-link" href="#featured" onclick="closeMobileNav()">Opportunities</a>
+      <a class="mn-link" href="#plans" onclick="closeMobileNav()">Plans</a>
+      <div class="mn-divider"></div>
+      <div class="mn-btns">
+        <a class="mn-btn mn-btn-ghost" href="#" onclick="showModal('login');closeMobileNav();return false;">Log In</a>
+        <button class="mn-btn mn-btn-red" onclick="showModal('waitlist');closeMobileNav()">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-slides">
+      <div class="hero-slide" style="background-image:url('images/meeting.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/office.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/robot.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/tesearth.jpg')"></div>
+    </div>
+    <div class="hero-veil"></div>
+    <div class="hero-inner">
+      <div class="pill"><span class="dot"></span> Private Market Access — From $1,000 </div>
+      <h1>Own a Stake <span class="red">in
+Tomorrow's World</span></h1>
+      <p>Access the future of investing. X Flow combines exposure to frontier innovation from SpaceX to xAI with institutional-grade AI that continuously optimizes portfolios across stocks, crypto, and emerging opportunities.</p>
+    </div>
+  </header>
+
+  <!-- CRYPTO TICKER -->
+  <div class="live-ticker crypto-bar">
+    <div class="t-label"><span class="ldot"></span>CRYPTO</div>
+    <div class="t-run"><div class="t-run-inner" id="cryptoBar"></div></div>
+  </div>
+  <!-- TRADINGVIEW TICKER -->
+  <div class="tradingview-widget-container" style="background:#040407;border-bottom:1px solid rgba(255,255,255,.08)">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {
+      "symbols": [
+        {"proName":"NASDAQ:TSLA","title":"Tesla"},
+        {"proName":"NASDAQ:AAPL","title":"Apple"},
+        {"proName":"NASDAQ:MSFT","title":"Microsoft"},
+        {"proName":"NASDAQ:NVDA","title":"Nvidia"},
+        {"proName":"NASDAQ:GOOGL","title":"Alphabet"},
+        {"proName":"NASDAQ:META","title":"Meta"},
+        {"proName":"NASDAQ:AMZN","title":"Amazon"},
+        {"proName":"NASDAQ:NFLX","title":"Netflix"},
+        {"proName":"NASDAQ:AMD","title":"AMD"},
+        {"proName":"NASDAQ:RKLB","title":"Rocket Lab"},
+        {"proName":"NASDAQ:ASTS","title":"AST SpaceMobile"},
+        {"proName":"NASDAQ:PLTR","title":"Palantir"},
+        {"proName":"NASDAQ:COIN","title":"Coinbase"},
+        {"proName":"NASDAQ:INTC","title":"Intel"}
+      ],
+      "showSymbolLogo": true,
+      "isTransparent": true,
+      "displayMode": "adaptive",
+      "colorTheme": "dark",
+      "locale": "en"
+    }
+    </script>
+  </div>
+
+  <!-- STEPS -->
+  <section class="section light-sec" id="steps">
+    <div class="wrap steps-head">
+      <div class="eyebrow">Intelligent System Design</div>
+      <h2 class="h-xxl" style="margin-top:20px">
+        <span class="l1">THREE STEPS.</span>
+        <span class="l2">REAL OWNERSHIP.</span>
+      </h2>
+    </div>
+    <div class="wrap">
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="num">01</div>
+          <div class="uline"></div>
+          <h3>Create Your Account</h3>
+          <ul>
+            <li>Sign up in under 2 minutes</li>
+            <li>Complete identity verification (KYC)</li>
+            <li>Fund your account — deposit from $1,000</li>
+          </ul>
+        </div>
+        <div class="step-card">
+          <div class="num">02</div>
+          <div class="uline"></div>
+          <h3>Choose Your Investment</h3>
+          <ul>
+            <li>Browse SpaceX, Boring Company &amp; more</li>
+            <li>Select a tier — Explorer, Pioneer, or Visionary</li>
+            <li>Or activate an AI trading plan</li>
+          </ul>
+        </div>
+        <div class="step-card">
+          <div class="num">03</div>
+          <div class="uline"></div>
+          <h3>Track &amp; Earn</h3>
+          <ul>
+            <li>Monitor your stake in real time</li>
+            <li>Receive yield distributions to your account</li>
+            <li>Withdraw profits whenever you choose</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ECOSYSTEM -->
+  <section class="section eco">
+    <div class="wrap">
+      <div class="eco-eyebrow">Strategic Exposure</div>
+      <h2 class="h-xxl">
+        <span class="l1">THE MUSK</span>
+        <span class="l2">ECOSYSTEM</span>
+      </h2>
+      <p class="lead">Every company in our portfolio is building critical infrastructure for civilisation's next chapter — aerospace, satellite internet, clean energy, AI, and neural interfaces. SpaceX and Starlink are open for investment now.</p>
+      <div class="eco-grid">
+
+        <div class="eco-card open">
+          <div class="tag-open"><span class="dot"></span> Open for Investment</div>
+          <div class="co-name">SpaceX <span class="tk">PRIVATE</span></div>
+          <p>Reusable launch vehicles, Starlink satellite internet, and the first interplanetary transportation system.</p>
+        </div>
+
+        <div class="eco-card open">
+          <div class="tag-open"><span class="dot"></span> Open for Investment</div>
+          <div class="co-name">Starlink <span class="tk">PRIVATE</span></div>
+          <p>SpaceX's satellite internet division — over 6,000 satellites in orbit, $6.6B in annual revenue, serving 100+ countries with a highly anticipated IPO on the horizon.</p>
+        </div>
+
+        <div class="eco-card">
+          <div class="co-name">Tesla <span class="tk">TSLA</span></div>
+          <p>Electric vehicles, autonomous driving, energy storage, and solar — the vertically integrated clean energy company.</p>
+        </div>
+
+        <div class="eco-card">
+          <div class="co-name">Neuralink <span class="tk">PRIVATE</span></div>
+          <p>Brain-computer interface technology restoring mobility and expanding human cognitive bandwidth.</p>
+        </div>
+
+        <div class="eco-card">
+          <div class="co-name">xAI <span class="tk">PRIVATE</span></div>
+          <p>Advanced AI research company building Grok — a frontier large language model with real-time internet access.</p>
+        </div>
+
+        <div class="eco-card">
+          <div class="co-name">X Corp <span class="tk">PRIVATE</span></div>
+          <p>The everything app — payments, social, video, and AI converging into a single consumer platform.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED -->
+  <section class="section feat" id="featured">
+    <div class="wrap">
+      <div class="feat-top">
+        <div>
+          <div class="lbl"><span class="ln"></span> POPULAR RIGHT NOW</div>
+          <h2 class="h-xxl"><span class="l1">Featured</span> <span class="l2">Opportunity</span></h2>
+        </div>
+        <button class="btn btn-ghost" id="allOppBtn" onclick="toggleAllOpps()">All Opportunities ›</button>
+      </div>
+      <div class="feat-grid">
+
+        <!-- CARD 1 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/robotaxi.jpg')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp1">Robotaxi</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>The Next Trillion-Dollar Shift</h3>
+            <div class="desc">The future of transportation is autonomous. Discover the investment opportunities driving it.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y1">40%–120%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$1,000</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">412</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$9M raised</span><span>18% of $50M</span></div>
+              <div class="prog-track"><div class="prog-fill pf1"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib1" onclick="investNow('The Next Trillion-Dollar Shift','40%–120%',1000,'Robotaxi')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/Xai.jpg')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp2">xAI</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>xAI Colossus II — 1M GPU Cluster</h3>
+            <div class="desc">Back the infrastructure powering the world's most powerful AI.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y2">28%–90%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$4,000</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">289</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$128M raised</span><span>43% of $300M</span></div>
+              <div class="prog-track"><div class="prog-fill pf2"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib2" onclick="investNow('xAI Colossus II — 1M GPU Cluster','28%–90%',4000,'xAI')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/factory.jpg')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp3">TESLA</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Gigafactory Mexico — Phase 1</h3>
+            <div class="desc">Fund the next generation of affordable Tesla vehicles.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y3">18%–45%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$2,500</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">541</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$92M raised</span><span>46% of $200M</span></div>
+              <div class="prog-track"><div class="prog-fill pf3"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib3" onclick="investNow('Gigafactory Mexico — Phase 1','18%–45%',2500,'Tesla')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- EXTRA CARDS (shown on "All Opportunities") -->
+      <div class="feat-extra" id="featExtra">
+
+        <!-- CARD 4 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/optimus robot.png')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp4">OPTIMUS</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Optimus Gen-3 — Labor Revolution</h3>
+            <div class="desc">Back the humanoid robot redefining manufacturing, logistics, and service industries worldwide.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y4">35%–80%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$1,500</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">178</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$24M raised</span><span>12% of $200M</span></div>
+              <div class="prog-track"><div class="prog-fill pf4"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib1" onclick="investNow('Optimus Gen-3 — Labor Revolution','35%–80%',1500,'Optimus')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 5 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/neural link.png')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp5">NEURALINK</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Neuralink N1 — Human-AI Interface</h3>
+            <div class="desc">Invest in the technology merging human cognition with machine intelligence at clinical scale.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y5">50%–140%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$2,000</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">203</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$47M raised</span><span>31% of $150M</span></div>
+              <div class="prog-track"><div class="prog-fill pf5"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib2" onclick="investNow('Neuralink N1 — Human-AI Interface','50%–140%',2000,'Neuralink')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 6 -->
+        <div class="fc">
+          <div class="thumb" style="background-image:url('images/rocket.png')">
+            <div class="thumb-veil"></div>
+            <div class="thumb-pills">
+              <span class="cat-pill cp6">SPACEX</span>
+              <span class="live-pill"><span class="ldot2"></span> LIVE</span>
+            </div>
+          </div>
+          <div class="body">
+            <h3>SpaceX Starlink — Phase 4 Expansion</h3>
+            <div class="desc">Fund the satellite constellation delivering high-speed internet across 100+ countries.</div>
+            <div class="stats">
+              <div class="stat"><div class="sv y6">22%–60%</div><div class="sk">Yield</div></div>
+              <div class="stat"><div class="sv">$3,500</div><div class="sk">Min</div></div>
+              <div class="stat"><div class="sv">334</div><div class="sk">Investors</div></div>
+            </div>
+            <div class="prog">
+              <div class="prog-meta"><span>$310M raised</span><span>62% of $500M</span></div>
+              <div class="prog-track"><div class="prog-fill pf6"></div></div>
+            </div>
+            <div class="cta-row">
+              <span class="view">View investment details</span>
+              <span class="invest-btn ib3" onclick="investNow('SpaceX Starlink — Phase 4 Expansion','22%–60%',3500,'SpaceX')">INVEST NOW &rsaquo;</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PLANS -->
+  <section class="section plans" id="plans">
+    <div class="wrap center">
+      <div class="head-eyebrow">AI Capital Programs</div>
+      <h2 class="big-title">
+        <span class="w1">Structured Strategies</span>
+        <span class="w2">For Different Capital Tiers</span>
+      </h2>
+      <p class="lead">AI-powered systematic trading strategies designed around capital scale, risk tolerance, and execution depth.</p>
+    </div>
+    <div class="wrap">
+      <div class="plans-grid">
+
+        <!-- STARTER AI -->
+        <div class="plan">
+          <h3>Starter AI</h3>
+          <div class="cap-range">$5,000 – $10,000</div>
+          <div class="ret-label">Target Returns</div>
+          <div class="ret-num">200% – 350%</div>
+          <div class="ret-desc">Based on historical backtesting and volatility-adjusted strategy modeling.</div>
+          <div class="exec">Execution Cycle: <b>1 week</b></div>
+          <div class="divider"></div>
+          <div class="plan-desc">Designed for new investors seeking structured exposure to innovation-focused equities with automated risk controls.</div>
+          <ul>
+            <li>Automated trade execution</li>
+            <li>Risk-adjusted capital deployment</li>
+          </ul>
+          <button class="activate-btn">Activate Starter AI</button>
+        </div>
+
+        <!-- GROWTH AI -->
+        <div class="plan">
+          <h3>Growth AI</h3>
+          <div class="cap-range">$10,000 – $50,000</div>
+          <div class="ret-label">Target Returns</div>
+          <div class="ret-num">350% – 550%</div>
+          <div class="ret-desc">Advanced signal detection with volatility-aware execution framework.</div>
+          <div class="exec">Execution Cycle: <b>2 weeks</b></div>
+          <div class="divider"></div>
+          <div class="plan-desc">Enhanced AI signal modeling focused on high-growth innovation sectors and dynamic capital rotation.</div>
+          <ul>
+            <li>High-frequency signal detection</li>
+            <li>Sector rotation strategy</li>
+            <li>Volatility hedging logic</li>
+            <li>Weekly analytics dashboard</li>
+          </ul>
+          <button class="activate-btn">Activate Growth AI</button>
+        </div>
+
+        <!-- ELITE AI -->
+        <div class="plan">
+          <h3>Elite AI</h3>
+          <div class="cap-range">$50,000 – $100,000+</div>
+          <div class="ret-label">Target Returns</div>
+          <div class="ret-num">+700%</div>
+          <div class="ret-desc">Multi-layered AI execution across diversified innovation assets.</div>
+          <div class="exec">Execution Cycle: <b>4 weeks</b></div>
+          <div class="divider"></div>
+          <div class="plan-desc">Designed for large capital deployment with structured downside protection and dynamic reallocation systems.</div>
+          <ul>
+            <li>Cross-sector AI allocation engine</li>
+            <li>Downside risk containment protocol</li>
+            <li>Real-time capital rebalancing</li>
+            <li>Dedicated strategy oversight</li>
+          </ul>
+          <button class="activate-btn">Activate Elite AI</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section class="section light-sec method">
+    <div class="wrap center">
+      <div class="eyebrow">Risk Architecture</div>
+      <h2 class="h-xxl" style="margin-top:22px">
+        <span class="l1">CAPITAL PRESERVATION</span>
+        <span class="l2">IS SYSTEMIC</span>
+      </h2>
+      <p class="lead">AI-driven risk management frameworks designed to protect capital across market cycles.</p>
+    </div>
+    <div class="wrap">
+      <div class="method-grid">
+        <div class="mcard">
+          <div class="num">01</div>
+          <h3>Volatility Control Engine</h3>
+          <div class="uline"></div>
+          <p>Dynamic position sizing adjusts automatically to volatility signals, limiting exposure during unstable market conditions.</p>
+        </div>
+        <div class="mcard">
+          <div class="num">02</div>
+          <h3>Automated Drawdown Protocols</h3>
+          <div class="uline"></div>
+          <p>Predefined loss thresholds trigger automatic capital protection measures before losses compound.</p>
+        </div>
+        <div class="mcard">
+          <div class="num">03</div>
+          <h3>Multi-Sector Allocation</h3>
+          <div class="uline"></div>
+          <p>Capital is distributed across uncorrelated sectors and asset classes to reduce single-point risk.</p>
+        </div>
+        <div class="mcard">
+          <div class="num">04</div>
+          <h3>Real-Time Recalibration</h3>
+          <div class="uline"></div>
+          <p>AI systems continuously rebalance portfolios based on live market data and changing risk profiles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- INVESTOR TESTIMONIALS -->
+  <section class="testi-sec">
+    <div class="wrap center">
+      <div class="testi-ey">Investor Testimonials</div>
+      <div class="testi-title">
+        <span class="tw1">TRUSTED BY INVESTORS</span>
+        <span class="tw2">WORLDWIDE</span>
+      </div>
+      <p class="testi-sub">Real feedback from verified investors who have deployed capital through our platform.</p>
+    </div>
+    <div class="wrap">
+      <div class="testi-stats">
+        <div><span class="tsv">110,100+</span><span class="tsk">Active Investors</span></div>
+        <div><span class="tsv">$1.8B+</span><span class="tsk">Capital Deployed</span></div>
+        <div><span class="tsv">4.9/5</span><span class="tsk">Avg. Satisfaction</span></div>
+        <div><span class="tsv">68+</span><span class="tsk">Countries</span></div>
+      </div>
+
+      <!-- Row 1 — always visible -->
+      <div class="testi-cards">
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"Steady gains, month after month"</div>
+          <div class="tc-body">I moved $22,000 into the Growth AI plan in January. By March I had reinvested the returns twice. The drawdown protection saved me during the March dip I barely felt it.</div>
+          <div class="tc-who"><div class="tc-av">ET</div><div><div class="tc-name">Edward Thompson</div><div class="tc-role">Portfolio Investor · Australia</div></div></div>
+        </div>
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"My fund manager couldn't do this"</div>
+          <div class="tc-body">I've used three traditional wealth managers over eight years. EquiFlow's AI outperformed all of them in the first cycle. The allocation across sectors is genuinely sophisticated.</div>
+          <div class="tc-who"><div class="tc-av">PK</div><div><div class="tc-name">Patrick Kelly</div><div class="tc-role">Angel Investor · Liechtenstein</div></div></div>
+        </div>
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"Transparent and trustworthy"</div>
+          <div class="tc-body">Every transaction is logged in real time. I can see exactly what the AI is doing with my capital and why. That level of transparency is rare most platforms hide the mechanics.</div>
+          <div class="tc-who"><div class="tc-av">MR</div><div><div class="tc-name">Maria Rossi</div><div class="tc-role">Private Investor · Italy</div></div></div>
+        </div>
+      </div>
+
+      <!-- Row 2 — collapsible -->
+      <div class="testi-cards testi-extra" id="testiExtra" style="display:none;margin-top:20px">
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"Started small, scaled fast"</div>
+          <div class="tc-body">I entered with $6,000 on the Starter plan just to test it. After the first cycle I moved to Elite. The compounding effect is real I wish I had started with more capital from day one.</div>
+          <div class="tc-who"><div class="tc-av">JN</div><div><div class="tc-name">James Nakamura</div><div class="tc-role">Retail Investor · Japan</div></div></div>
+        </div>
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"Risk controls are genuinely impressive"</div>
+          <div class="tc-body">I tested the platform during two volatile weeks on purpose. Both times the AI reduced exposure automatically before the worst of the moves. My capital was fully protected. No manual intervention needed.</div>
+          <div class="tc-who"><div class="tc-av">SB</div><div><div class="tc-name">Sophie Brennan</div><div class="tc-role">Quantitative Investor · Ireland</div></div></div>
+        </div>
+        <div class="testi-card">
+          <span class="tc-q">&ldquo;</span>
+          <span class="tc-stars">★★★★★</span>
+          <div class="tc-title">"Finally something built for serious capital"</div>
+          <div class="tc-body">Most platforms cater to casual traders. EquiFlow feels built for people who take capital allocation seriously. The Elite tier execution is institutional grade. I've referred four colleagues already.</div>
+          <div class="tc-who"><div class="tc-av">AO</div><div><div class="tc-name">Mark Scofield</div><div class="tc-role">Fund Manager · USA</div></div></div>
+        </div>
+      </div>
+
+      <!-- Toggle button -->
+      <div style="text-align:center;margin-top:40px">
+        <button id="testiToggle" onclick="(function(){var e=document.getElementById('testiExtra'),b=document.getElementById('testiToggle'),open=e.style.display==='grid';e.style.display=open?'none':'grid';b.textContent=open?'Show More Reviews ↓':'Collapse Reviews ↑'})()" style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(0,0,0,.18);color:#0a0a0a;padding:14px 34px;border-radius:50px;cursor:pointer;transition:.2s">Show More Reviews ↓</button>
+      </div>
+
+      <!-- Video carousel -->
+      <div class="vid-carousel-wrap">
+        <div class="vid-carousel-label">Investor Stories</div>
+        <div class="vid-carousel" id="vidCarousel">
+          <div class="vid-item">
+            <div class="vid-thumb" onclick="playFullscreen(this)">
+              <video src="videos/compressed-alexvid.mp4" preload="metadata"></video>
+              <div class="vid-play"><div class="vid-play-btn"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+            </div>
+            <div class="vid-name">Alex</div><div class="vid-role">Beta Investor</div>
+          </div>
+          <div class="vid-item">
+            <div class="vid-thumb" onclick="playFullscreen(this)">
+              <video src="videos/compressed-carlosvid.mp4" preload="metadata"></video>
+              <div class="vid-play"><div class="vid-play-btn"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+            </div>
+            <div class="vid-name">Carlos</div><div class="vid-role">Beta Investor</div>
+          </div>
+          <div class="vid-item">
+            <div class="vid-thumb" onclick="playFullscreen(this)">
+              <video src="videos/compressed-emmavid.mp4" preload="metadata"></video>
+              <div class="vid-play"><div class="vid-play-btn"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+            </div>
+            <div class="vid-name">Emma</div><div class="vid-role">Beta Investor</div>
+          </div>
+          <div class="vid-item">
+            <div class="vid-thumb" onclick="playFullscreen(this)">
+              <video src="videos/compressed-mattvid.mp4" preload="metadata"></video>
+              <div class="vid-play"><div class="vid-play-btn"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+            </div>
+            <div class="vid-name">Matt</div><div class="vid-role">Beta Investor</div>
+          </div>
+          <div class="vid-item">
+            <div class="vid-thumb" onclick="playFullscreen(this)">
+              <video src="videos/compressed-mikevid.mp4" preload="metadata"></video>
+              <div class="vid-play"><div class="vid-play-btn"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div></div>
+            </div>
+            <div class="vid-name">Mike</div><div class="vid-role">Beta Investor</div>
+          </div>
+        </div>
+        <div class="vid-nav">
+          <button class="vid-btn" onclick="document.getElementById('vidCarousel').scrollBy({left:-300,behavior:'smooth'})">&#8592;</button>
+          <button class="vid-btn" onclick="document.getElementById('vidCarousel').scrollBy({left:300,behavior:'smooth'})">&#8594;</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- GIVEAWAY -->
+  <section class="giveaway-sec">
+    <div class="gw-glow"></div>
+    <div class="gw-glow-2"></div>
+    <div class="wrap gw-inner">
+
+      <!-- LEFT -->
+      <div class="gw-left">
+        <div class="gw-ey">Monthly Investor Reward</div>
+        <h2 class="gw-title">
+          <span class="ga">WIN A</span>
+          <span class="gb">TESLA</span>
+          <span class="ga">MODEL.</span>
+        </h2>
+        <p class="gw-desc">Every active investor with a confirmed deposit is automatically entered every month. No tickets, no extra steps — just invest and you're in.</p>
+        <div class="gw-steps">
+          <div class="gw-step">
+            <div class="gw-step-num">01</div>
+            <div>
+              <div class="gw-step-title">Deposit &amp; Activate</div>
+              <div class="gw-step-desc">Any tier qualifies — $5,000 to $50,000</div>
+            </div>
+          </div>
+          <div class="gw-step">
+            <div class="gw-step-num">02</div>
+            <div>
+              <div class="gw-step-title">You're Entered Automatically</div>
+              <div class="gw-step-desc">Every active investor is entered each month — no extra steps</div>
+            </div>
+          </div>
+          <div class="gw-step">
+            <div class="gw-step-num">03</div>
+            <div>
+              <div class="gw-step-title">Monthly Live Draw</div>
+              <div class="gw-step-desc">Winners will be notified privately via the platform</div>
+            </div>
+          </div>
+        </div>
+        <a href="#waitlist" class="gw-cta">Join Waitlist to Enter →</a>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="gw-right">
+        <div class="gw-card">
+          <div class="gw-badge">Grand Prize</div>
+          <div class="gw-car-img">
+            <img src="images/lineup.jpg" alt="Tesla Models lineup" />
+            <div class="gw-car-caption">
+              <div class="gw-car-name">Tesla Models</div>
+              <div class="gw-car-val">Est. value <span>$40,000 – $114,000</span> &middot; 2025 Edition</div>
+            </div>
+          </div>
+          <div class="gw-draw-row">
+            <div class="gw-rdot"></div>
+            <span><strong style="color:#fff">Monthly draw</strong> &mdash; held on the last day of each month</span>
+          </div>
+          <div class="gw-eligible">
+            <svg width="16" height="16" fill="none" viewBox="0 0 16 16" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="#19c98a" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#19c98a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span><strong>Open to all active investors.</strong> Any confirmed deposit — Tier 1 through Tier 4 — automatically qualifies you every month.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-sec">
+    <div class="wrap">
+      <div class="faq-ey">Got Questions?</div>
+      <h2 class="faq-title">FREQUENTLY<br><span>ASKED</span></h2>
+      <p class="faq-sub">Everything you need to know before investing. Can't find your answer? Reach out to us directly.</p>
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What is EquiFlow and how does it work?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">EquiFlow is a structured investment platform that pools capital from verified investors and deploys it across a curated portfolio of high-yield assets. You deposit, we allocate — and your returns are tracked in real time through your investor dashboard.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What are the minimum and maximum investment amounts?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">Investment tiers start from $5,000 (Tier 1) and go up to $50,000 (Tier 4). Each tier comes with different return rates, priority access, and giveaway eligibility. All tiers qualify for the monthly Tesla draw.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How are my returns paid out?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">Returns are calculated monthly and paid directly to your registered bank account or crypto wallet. You can also choose to reinvest your returns to compound your position. Payout schedules are visible on your dashboard at all times.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Is my investment secure?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">We operate under a strict risk architecture with layered portfolio diversification, stop-loss protocols, and capital reserve requirements. Investor funds are held in segregated accounts and never commingled with operational capital.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How does the Tesla giveaway work?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">Every active investor with a confirmed deposit is automatically entered into our monthly Tesla draw — no tickets, no additional steps. The draw is held on the last day of each month and the winner is notified privately through the platform.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How long does verification (KYC) take?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">KYC verification is typically completed within 24–48 hours of submitting your documents. In most cases it's done within a few hours. You'll receive a confirmation email and platform notification as soon as your account is approved.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Which countries are supported?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">EquiFlow is currently available in 68+ countries across North America, Europe, the Middle East, Africa, and Southeast Asia. A full list of supported countries is available during the registration process.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Can I withdraw my funds early?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">Early withdrawal is available with a notice period of 14 business days. Depending on your investment tier and lock-in term, an early exit fee may apply. Full terms are disclosed before you commit to any position.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact-sec">
+    <div class="wrap contact-inner">
+      <div>
+        <div class="contact-ey">Get In Touch</div>
+        <h2 class="contact-title">WE'RE<br>HERE TO<br><span>HELP.</span></h2>
+        <p class="contact-desc">Have a question about your account, a deposit, or anything else? Our team responds within a few hours. Reach us on Telegram for the fastest reply.</p>
+      </div>
+      <div class="contact-cards">
+        <a href="https://t.me/equiflow" class="contact-card tg" target="_blank" rel="noopener">
+          <div class="contact-card-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 0C6.268 0 0 6.268 0 14s6.268 14 14 14 14-6.268 14-14S21.732 0 14 0zm6.918 9.538l-2.362 11.13c-.174.78-.636.97-1.288.603l-3.562-2.624-1.72 1.655c-.19.19-.35.35-.717.35l.255-3.626 6.59-5.954c.287-.255-.062-.396-.443-.14l-8.145 5.127-3.508-1.096c-.763-.238-.778-.763.159-1.128l13.7-5.28c.636-.23 1.19.14.04 1.983z" fill="#26a5e4"/></svg>
+          </div>
+          <div class="contact-card-text">
+            <div class="contact-card-label">Telegram</div>
+            <div class="contact-card-handle">@EquiFlow</div>
+            <div class="contact-card-note">Fastest response · Usually within 1–2 hours</div>
+          </div>
+          <div class="contact-card-arrow">→</div>
+        </a>
+        <a href="mailto:support@equiflow.com" class="contact-card gm">
+          <div class="contact-card-icon">
+            <svg width="28" height="22" viewBox="0 0 28 22" fill="none"><rect width="28" height="22" rx="3" fill="rgba(255,51,64,.15)"/><path d="M2 2l12 9.5L26 2" stroke="#ff3340" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 2h24v18H2V2z" stroke="#ff3340" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="contact-card-text">
+            <div class="contact-card-label">Email</div>
+            <div class="contact-card-handle">Equiflowsupport@gmail.com</div>
+            <div class="contact-card-note">General enquiries · Response within 24 hours</div>
+          </div>
+          <div class="contact-card-arrow">→</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta">
+    <div class="wrap">
+      <div class="eyebrow" style="color:#8a8a8e">Allocation Now Open</div>
+      <h2 class="h-xxl" style="margin-top:22px"><span class="l1">PUT YOUR CAPITAL</span><span class="l2">TO WORK TODAY</span></h2>
+      <p class="lead">A limited number of investment positions are available across our AI-managed opportunity tiers. Qualified investors can access 45%–700% target returns — fully managed, with no prior experience required.</p>
+      <div class="btns">
+        <button class="btn btn-white" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'})">View Investment Plans</button>
+        <button class="btn btn-ghost" onclick="showModal('waitlist')">Join the Waitlist</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <div class="brand">EQUIFLOW <span class="red">AI</span></div>
+          <p>AI-powered private-market investing. Institutional-grade returns, accessible to qualified individuals worldwide.</p>
+        </div>
+        <div class="fcol">
+          <h5>Platform</h5>
+          <a href="#steps">How It Works</a>
+          <a href="#featured">Opportunities</a>
+          <a href="#plans">Plans</a>
+        </div>
+        <div class="fcol">
+          <h5>Company</h5>
+          <a href="#">About Us</a>
+          <a href="#">Careers</a>
+          <a href="#">Blog</a>
+          <a href="#">Contact</a>
+        </div>
+        <div class="fcol">
+          <h5>Legal</h5>
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Accessibility</a>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        <b>Disclaimer:</b> Investing involves risk, and returns are not guaranteed. You may lose some or all of your investment. Flow does not provide personalized financial advice. Please conduct your own research, consider your risk tolerance, and invest wisely—never more than you can afford to lose.
+      </div>
+
+      <div class="foot-bottom">
+        <span>© 2026 Flow. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+<script>
+  /* ---------- LIVE TICKERS ---------- */
+  var CRYPTO_IDS = 'bitcoin,ethereum,binancecoin,solana,ripple,dogecoin,cardano,avalanche-2,polkadot,chainlink';
+  var CRYPTO_SYM = {bitcoin:'BTC',ethereum:'ETH',binancecoin:'BNB',solana:'SOL',ripple:'XRP',dogecoin:'DOGE',cardano:'ADA','avalanche-2':'AVAX',polkadot:'DOT',chainlink:'LINK'};
+function fmt(n, d){ return typeof n==='number' ? n.toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g,',') : '--'; }
+
+  function buildItems(items){
+    return items.map(function(i){
+      var dir = i.chg >= 0 ? 'up' : 'down';
+      var arrow = i.chg >= 0 ? '▲' : '▼';
+      return '<span class="t-item-live">' +
+        '<span class="t-sym">'+i.sym+'</span>' +
+        '<span class="t-price">$'+i.price+'</span>' +
+        '<span class="t-chg '+dir+'">'+arrow+' '+Math.abs(i.chg).toFixed(2)+'%</span>' +
+        '</span>';
+    }).join('');
+  }
+
+  function setTicker(id, items){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var h = buildItems(items);
+    el.innerHTML = h + h; // duplicate for seamless loop
+  }
+
+  function fetchCrypto(){
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids='+CRYPTO_IDS+'&vs_currencies=usd&include_24hr_change=true')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var items = Object.keys(data).map(function(id){
+          var d = data[id];
+          return { sym: CRYPTO_SYM[id]||id.toUpperCase(), price: fmt(d.usd, d.usd>100?2:4), chg: d.usd_24h_change||0 };
+        });
+        setTicker('cryptoBar', items);
+      }).catch(function(e){ console.warn('Crypto fetch failed',e); });
+  }
+
+  fetchCrypto();
+  setInterval(fetchCrypto, 30000);
+
+  /* ---------- VIDEO LIGHTBOX ---------- */
+  function playFullscreen(thumb) {
+    var src = thumb.querySelector('video').src;
+    var overlay = document.getElementById('vidOverlay');
+    var overlayVid = document.getElementById('overlayVid');
+    overlayVid.src = src;
+    overlay.style.display = 'flex';
+    overlayVid.play();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeVidOverlay() {
+    var overlay = document.getElementById('vidOverlay');
+    var overlayVid = document.getElementById('overlayVid');
+    overlayVid.pause();
+    overlayVid.src = '';
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeVidOverlay(); });
+
+  /* ---------- ALL OPPORTUNITIES TOGGLE ---------- */
+  function toggleAllOpps() {
+    var extra = document.getElementById('featExtra');
+    var btn = document.getElementById('allOppBtn');
+    var isOpen = extra.classList.contains('open');
+    extra.classList.toggle('open');
+    btn.textContent = isOpen ? 'All Opportunities ›' : 'Show Less ‹';
+  }
+
+  /* ---------- FAQ TOGGLE ---------- */
+  function toggleFaq(btn) {
+    var item = btn.parentElement;
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(el){ el.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  }
+
+  /* ---------- SCROLL REVEAL ---------- */
+  var revealTargets = document.querySelectorAll(
+    '.eyebrow, .h-xxl, .hero .pill, .hero h1, .hero p, .lead, .plans .lead, .method .lead, ' +
+    '.step-card, .eco-card, .fc, .plan, .mcard, .feat-top, .cta .btns, ' +
+    '.testi-card, .testi-stats, .testi-ey, .testi-title, .testi-sub, ' +
+    '.vid-carousel-wrap, .vid-carousel-label, ' +
+    '.gw-left, .gw-card, .gw-countdown, ' +
+    '.faq-ey, .faq-title, .faq-sub, .faq-item, ' +
+    '.contact-ey, .contact-title, .contact-desc, .contact-card'
+  );
+  revealTargets.forEach(function(el){ el.classList.add('reveal'); });
+
+  // Stagger items inside each grid so they cascade instead of popping together.
+  document.querySelectorAll(
+    '.steps-grid, .eco-grid, .feat-grid, .plans-grid, .method-grid, ' +
+    '.testi-cards, .testi-stats, .contact-cards, .gw-steps'
+  ).forEach(function(grid){
+    Array.prototype.slice.call(grid.children).forEach(function(child,i){
+      child.classList.add('d' + (Math.min(i,3) + 1));
+    });
+  });
+
+  // Stagger faq-items separately (up to d6)
+  document.querySelectorAll('.faq-list').forEach(function(list){
+    Array.prototype.slice.call(list.children).forEach(function(child,i){
+      child.classList.add('d' + (Math.min(i,5) + 1));
+    });
+  });
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+  revealTargets.forEach(function(el){ io.observe(el); });
+
+  /* ---------- CARD TILT ---------- */
+  (function(){
+    var cards = document.querySelectorAll('.fc, .plan, .eco-card, .testi-card, .gw-card, .contact-card');
+    cards.forEach(function(card){
+      card.addEventListener('mousemove', function(e){
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width  - 0.5;
+        var y = (e.clientY - r.top)  / r.height - 0.5;
+        card.style.transform = 'perspective(900px) rotateX(' + (-y*9) + 'deg) rotateY(' + (x*9) + 'deg) translateY(-6px)';
+      });
+      card.addEventListener('mouseleave', function(){
+        card.style.transform = '';
+      });
+    });
+  })();
+
+  /* ---------- SECTION EDGE FADES ---------- */
+  // Drop a soft gradient veil at the seam between each section and the next,
+  // matched to whichever side is dark vs. light.
+  function tone(el){
+    if(!el) return 'dark';
+    if(el.classList.contains('light-sec')) return 'light';
+    return 'dark';
+  }
+  function addFade(el, pos, t){
+    var d = document.createElement('div');
+    d.className = 'fade-' + pos + ' fade-' + t + '-' + pos;
+    el.appendChild(d);
+  }
+  var blocks = document.querySelectorAll('.section, footer');
+  blocks.forEach(function(sec, i){
+    var prev = blocks[i-1];
+    var next = blocks[i+1];
+    // veil the top of this section using THIS section's own tone, only where the
+    // section above differs (so light->dark and dark->light seams get softened).
+    if(prev && tone(prev) !== tone(sec)) addFade(sec, 'top', tone(sec));
+    if(next && tone(next) !== tone(sec)) addFade(sec, 'bottom', tone(sec));
+  });
+</script>
+
+  <!-- ============ MODALS ============ -->
+  <div class="modal-overlay" id="authModal" aria-hidden="true" onclick="if(event.target===this)modalHide()">
+
+    <!-- WAITLIST CARD -->
+    <div class="modal-card" id="modalWaitlist" role="dialog" aria-modal="true" aria-label="Join the waitlist" style="display:none">
+      <button class="modal-x" onclick="modalHide()" aria-label="Close">&times;</button>
+      <div id="wlForm">
+        <div class="wl-icon">🚀</div>
+        <h2>You're Early.<br>That's the Point.</h2>
+        <p class="wl-sub">EquiFlow is invite-only right now. Drop your email and we'll reach out the moment your spot opens — no spam, ever.</p>
+        <div class="wl-perks">
+          <div class="wl-perk"><span class="wl-check">✓</span> Priority access before public launch</div>
+          <div class="wl-perk"><span class="wl-check">✓</span> Locked-in early investor rates</div>
+          <div class="wl-perk"><span class="wl-check">✓</span> Automatically entered in the Tesla draw</div>
+          <div class="wl-perk"><span class="wl-check">✓</span> A personal onboarding call with our team</div>
+        </div>
+        <form onsubmit="return wlSubmit(event)">
+          <input class="wl-input" type="email" id="wlEmail" placeholder="your@email.com" required autocomplete="email">
+          <button type="submit" class="wl-btn">Reserve My Spot →</button>
+        </form>
+        <p class="wl-fine">We respect your inbox. Unsubscribe anytime.</p>
+      </div>
+      <div class="wl-success" id="wlSuccess">
+        <div class="wl-success-icon">🎉</div>
+        <h3>You're on the list!</h3>
+        <p>Nice — you're in. We'll be in touch soon. Keep an eye on your inbox and get ready to move fast when your invite lands.</p>
+      </div>
+    </div>
+
+    <!-- LOGIN CARD -->
+    <div class="modal-card" id="modalLogin" style="display:none">
+      <button class="modal-x" onclick="modalHide()">&times;</button>
+      <div class="wl-icon">🔐</div>
+      <h2>Welcome Back.</h2>
+      <p class="wl-sub" style="margin-bottom:28px">Sign in to your EquiFlow investor account.</p>
+      <div class="li-field">
+        <label>Email Address</label>
+        <input type="email" id="liEmail" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="li-field">
+        <label>Password</label>
+        <div class="li-pw-wrap">
+          <input type="password" id="liPw" placeholder="Your password" autocomplete="current-password">
+          <button type="button" class="li-pw-toggle" id="liPwToggle" onclick="
+            var inp=document.getElementById('liPw');
+            var show=inp.type==='text';
+            inp.type=show?'password':'text';
+            this.textContent=show?'SHOW':'HIDE';
+          ">SHOW</button>
+        </div>
+      </div>
+      <div id="liErr" style="display:none;background:rgba(255,51,64,.1);border:1px solid rgba(255,51,64,.3);color:#ff8a91;font-size:12px;padding:9px 12px;border-radius:8px;margin-bottom:12px;text-align:center"></div>
+      <button class="li-btn" onclick="liSubmit()">Sign In</button>
+      <div class="li-switch">Not on the platform yet? <button type="button" onclick="showModal('waitlist')">Join the waitlist</button></div>
+    </div>
+
+  </div>
+
+  <!-- ============ INVEST MODAL (logged-in users) ============ -->
+  <div id="investModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeInvestModal()">
+    <div style="background:#0d0d0f;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:36px 32px;width:100%;max-width:460px;animation:cardIn .35s cubic-bezier(.22,1,.36,1)" id="investModalBox">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <script>
+    function modalHide(){
+      var overlay = document.getElementById('authModal');
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    function showModal(which){
+      var overlay   = document.getElementById('authModal');
+      var wlCard    = document.getElementById('modalWaitlist');
+      var liCard    = document.getElementById('modalLogin');
+      wlCard.style.display = (which === 'waitlist') ? '' : 'none';
+      liCard.style.display = (which === 'login')    ? '' : 'none';
+      document.getElementById('wlForm').style.display    = '';
+      document.getElementById('wlSuccess').style.display = 'none';
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function(){
+        var focus = which === 'login'
+          ? document.getElementById('liEmail')
+          : document.getElementById('wlEmail');
+        if(focus) focus.focus();
+      }, 320);
+    }
+    async function wlSubmit(e){
+      e.preventDefault();
+      var email = (document.getElementById('wlEmail').value || '').trim().toLowerCase();
+      if(email){
+        var already = await dbWaitlistEmailExists(email);
+        if(!already){
+          var refBy = (new URLSearchParams(location.search).get('ref') || '').toUpperCase() || null;
+          await dbAddToWaitlist({ id: genId(), email: email, status: 'WAITLIST', joined_at: new Date().toISOString(), ref_by: refBy });
+        }
+      }
+      document.getElementById('wlForm').style.display    = 'none';
+      document.getElementById('wlSuccess').style.display = 'flex';
+      return false;
+    }
+    async function liSubmit() {
+      var email = (document.getElementById('liEmail').value || '').trim().toLowerCase();
+      var pass  = (document.getElementById('liPw').value || '');
+      var errEl = document.getElementById('liErr');
+      errEl.style.display = 'none';
+
+      if (!email || !pass) {
+        errEl.textContent = 'Please enter your email and password.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var user = await dbGetUserByEmail(email);
+
+      if (!user || user.password !== pass) {
+        errEl.textContent = 'Incorrect email or password.';
+        errEl.style.display = 'block';
+        document.getElementById('liPw').value = '';
+        return;
+      }
+
+      localStorage.setItem('ef_current_user', user.id);
+      localStorage.setItem('ef_current_name', user.name);
+
+      var dest = 'choose-plan.html';
+      if (user.status === 'ACTIVE' || user.status === 'PROCESSING') {
+        dest = 'dashboard.html';
+      } else if (user.status === 'REJECTED') {
+        dest = 'choose-plan.html';
+      } else if (user.plan_key === 'ai-growth') {
+        dest = 'ai-plans.html';
+      } else if (user.plan_key === 'accessible') {
+        dest = 'opportunities.html';
+      }
+      window.location.href = dest;
+    }
+    /* ---- INVEST NOW logic ---- */
+    function investNow(name, yield_, min, cat) {
+      showModal('waitlist');
+    }
+
+    function buildInvestForm(name, yield_, min, cat) {
+      return '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px">'
+        + '<div><div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:6px">'+cat+'</div>'
+        + '<div style="font-family:Montserrat,sans-serif;font-weight:900;font-size:19px;line-height:1.2;color:#fff">'+name+'</div></div>'
+        + '<button onclick="closeInvestModal()" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:22px;line-height:1;padding:4px">×</button></div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">'
+        + '<div style="padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">'
+        + '<div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:4px">Yield</div>'
+        + '<div style="font-family:Montserrat,sans-serif;font-weight:900;font-size:16px;color:#ff3340">'+yield_+'</div></div>'
+        + '<div style="padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">'
+        + '<div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:4px">Min Entry</div>'
+        + '<div style="font-family:Montserrat,sans-serif;font-weight:900;font-size:16px;color:#fff">$'+min.toLocaleString()+'</div></div></div>'
+        + '<div style="margin-bottom:14px"><label style="display:block;font-size:11px;font-weight:600;color:#6b7280;margin-bottom:7px">Investment Amount (USD)</label>'
+        + '<input id="inv-amt" type="number" min="'+min+'" placeholder="Min $'+min.toLocaleString()+'" oninput="calcInvReturn('+min+')"'
+        + ' style="width:100%;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#e2e4ed;font-family:Inter,sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s;box-sizing:border-box"'
+        + ' onfocus="this.style.borderColor=\'#ff3340\'" onblur="this.style.borderColor=\'rgba(255,255,255,.1)\'"></div>'
+        + '<div id="inv-est" style="padding:12px 14px;border-radius:10px;background:rgba(255,51,64,.06);border:1px solid rgba(255,51,64,.15);font-family:Montserrat,sans-serif;font-weight:900;font-size:17px;color:#ff3340;margin-bottom:18px">Enter amount above</div>'
+        + '<div style="padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:20px">'
+        + '<strong style="color:#ff3340">Next step:</strong> Submit your interest and your account manager will send deposit instructions within 24 hours.</div>'
+        + '<button onclick="submitInvestInterest(\''+name.replace(/'/g,'\\\'')+'\')" style="width:100%;padding:14px;border:none;border-radius:11px;background:#ff3340;color:#fff;font-family:Inter,sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(255,51,64,.35);transition:opacity .15s" onmouseover="this.style.opacity=\'.88\'" onmouseout="this.style.opacity=\'1\'">Confirm Interest →</button>';
+    }
+
+    function calcInvReturn(min) {
+      var amt = parseFloat(document.getElementById('inv-amt').value || 0);
+      var el  = document.getElementById('inv-est');
+      if (!el) return;
+      if (amt >= min) {
+        var low  = (amt * 0.18).toFixed(2);
+        var high = (amt * 0.45).toFixed(2);
+        el.textContent = 'Est. return: $' + Number(low).toLocaleString() + ' – $' + Number(high).toLocaleString() + ' / month';
+      } else if (amt > 0) {
+        el.textContent = 'Minimum is $' + min.toLocaleString();
+        el.style.color = '#9ca3af';
+      } else {
+        el.textContent = 'Enter amount above';
+        el.style.color = '#ff3340';
+      }
+    }
+
+    async function submitInvestInterest(name) {
+      var amt = parseFloat(document.getElementById('inv-amt') && document.getElementById('inv-amt').value || 0);
+      var d   = _investData || {};
+      if (!amt || amt < d.min) {
+        var inp = document.getElementById('inv-amt');
+        if (inp) { inp.style.borderColor = '#ff3340'; inp.focus(); }
+        return;
+      }
+      var uid = localStorage.getItem('ef_current_user');
+      if (uid) { try { await dbAddOppInterest(uid, name); } catch(e) {} }
+      document.getElementById('investModalBox').innerHTML =
+        '<div style="text-align:center;padding:12px 0">'
+        + '<div style="width:64px;height:64px;border-radius:18px;background:rgba(25,201,138,.1);border:1px solid rgba(25,201,138,.25);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px">✅</div>'
+        + '<div style="font-family:Montserrat,sans-serif;font-weight:900;font-size:20px;color:#fff;margin-bottom:10px">Interest Submitted!</div>'
+        + '<p style="font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:24px">Your interest in <strong style="color:#e2e4ed">'+name+'</strong> for <strong style="color:#fff">$'+Number(amt).toLocaleString()+'</strong> is saved.<br>Your account manager will reach out within <strong style="color:#19c98a">24 hours</strong>.</p>'
+        + '<button onclick="closeInvestModal()" style="padding:12px 28px;border-radius:11px;background:#19c98a;color:#000;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:Inter,sans-serif">Back to Opportunities</button></div>';
+    }
+
+    function closeInvestModal() {
+      var modal = document.getElementById('investModal');
+      modal.style.display = 'none';
+      _investData = null;
+    }
+
+    /* ---- Auto-expand all opps + scroll if arriving from plan page ---- */
+    (function(){
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('invest') === '1') {
+        var extra = document.getElementById('featExtra');
+        var btn   = document.getElementById('allOppBtn');
+        if (extra && !extra.classList.contains('open')) {
+          extra.classList.add('open');
+          if (btn) btn.textContent = 'Show Less ‹';
+        }
+        /* smooth scroll after a short delay so section renders */
+        setTimeout(function(){
+          var sec = document.getElementById('featured');
+          if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    })();
+
+    /* ---- MOBILE NAV ---- */
+    function toggleMobileNav() {
+      var mn   = document.getElementById('mobile-nav');
+      var icon = document.getElementById('hbg-icon');
+      var open = mn.classList.toggle('open');
+      icon.innerHTML = open
+        ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+        : '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+    }
+    function closeMobileNav() {
+      var mn   = document.getElementById('mobile-nav');
+      var icon = document.getElementById('hbg-icon');
+      if (!mn) return;
+      mn.classList.remove('open');
+      icon.innerHTML = '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+    }
+    /* Close mobile nav on outside click or Escape */
+    document.addEventListener('click', function(e) {
+      var mn  = document.getElementById('mobile-nav');
+      var btn = document.getElementById('nav-hamburger');
+      if (mn && mn.classList.contains('open') && !mn.contains(e.target) && btn && !btn.contains(e.target)) {
+        closeMobileNav();
+      }
+    });
+
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') { modalHide(); closeMobileNav(); } });
+
+    document.querySelectorAll('button, a').forEach(function(el){
+      var t = (el.textContent || '').trim().toLowerCase();
+      var waitlistTriggers = ['get started','create free account','choose growth','choose pro',
+                              'start free','enroll ›','browse courses','join waitlist to enter →',
+                              'join & enter now →','invest now ›'];
+      var loginTriggers = ['log in','sign in'];
+      if(waitlistTriggers.indexOf(t) !== -1)
+        el.addEventListener('click', function(ev){ ev.preventDefault(); showModal('waitlist'); });
+      if(loginTriggers.indexOf(t) !== -1)
+        el.addEventListener('click', function(ev){ ev.preventDefault(); showModal('login'); });
+    });
+  </script>
+
+  <!-- VIDEO LIGHTBOX OVERLAY -->
+  <div id="vidOverlay" onclick="if(event.target===this)closeVidOverlay()">
+    <button id="vidCloseBtn" onclick="closeVidOverlay()">&#x2715;</button>
+    <video id="overlayVid" controls playsinline></video>
+  </div>
+
+</body>
+</html>

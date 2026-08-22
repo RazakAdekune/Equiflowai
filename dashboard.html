@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --red:#ff3340;--green:#19c98a;--gold:#f5a623;--blue:#4f8ef7;
+      --dark:#080809;--card:#0d0d0f;--card2:#111114;--card3:#16161a;
+      --sb-bg:#070809;
+      --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.05);--sbborder:rgba(255,255,255,.06);
+      --gray:#6b7280;--gray2:#9ca3af;
+    }
+    html,body{height:100%;overflow:hidden;background:var(--dark)}
+    body{color:#e2e4ed;font-family:'Inter',system-ui,sans-serif}
+
+    /* BG (fixed so it shows through everything) */
+    .bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+    .b1{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(255,51,64,.07),transparent 70%);filter:blur(100px);top:-200px;left:-100px}
+    .b2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(25,201,138,.05),transparent 70%);filter:blur(100px);bottom:-100px;right:-50px}
+    .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.014) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px);background-size:48px 48px}
+
+    /* ══ MARKET TICKER ══ */
+    .market-ticker{position:relative;z-index:100;background:rgba(8,8,9,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--sbborder);height:36px;overflow:hidden;display:flex;align-items:center;flex-shrink:0}
+    .ticker-label{flex-shrink:0;padding:0 12px 0 16px;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);border-right:1px solid var(--sbborder);height:100%;display:flex;align-items:center;gap:6px;background:rgba(255,51,64,.05)}
+    .tlive-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse 1.4s ease-in-out infinite}
+    .ticker-track-wrap{flex:1;overflow:hidden}
+    .ticker-track{display:flex;animation:ticker-scroll 36s linear infinite}
+    .ticker-track:hover{animation-play-state:paused}
+    @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    .ticker-item{display:flex;align-items:center;gap:6px;padding:0 20px;border-right:1px solid var(--border2);white-space:nowrap;flex-shrink:0}
+    .ti-sym{font-size:10.5px;font-weight:700;color:#fff;font-family:'Montserrat',sans-serif;letter-spacing:.03em}
+    .ti-price{font-size:10.5px;color:var(--gray2)}
+    .ti-chg{font-size:9.5px;font-weight:600}
+    .ti-chg.up{color:var(--green)}
+    .ti-chg.dn{color:var(--red)}
+
+    /* ══ APP LAYOUT ══ */
+    .app-layout{display:flex;height:calc(100vh - 36px);position:relative;z-index:1}
+
+    /* ══ SIDEBAR ══ */
+    #sidebar{
+      width:210px;flex-shrink:0;
+      background:var(--sb-bg);
+      border-right:1px solid var(--sbborder);
+      display:flex;flex-direction:column;
+      overflow-y:auto;scrollbar-width:none;
+    }
+    #sidebar::-webkit-scrollbar{display:none}
+
+    .sb-brand{display:flex;align-items:center;gap:10px;padding:0 16px;height:56px;border-bottom:1px solid var(--sbborder);flex-shrink:0}
+    .sb-logo-icon{width:28px;height:28px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:900;color:#fff;font-family:'Montserrat',sans-serif;letter-spacing:.04em;flex-shrink:0}
+    .sb-logo-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:12px;letter-spacing:.1em;color:#fff;line-height:1}
+    .sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:.16em;color:var(--red);margin-top:3px;text-transform:uppercase}
+
+    .sb-nav{flex:1;padding:10px;display:flex;flex-direction:column;gap:2px}
+    .sb-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;font-size:12.5px;font-weight:500;color:var(--gray);cursor:pointer;transition:background .16s,color .16s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,.04);color:var(--gray2)}
+    .sb-item.active{background:rgba(255,51,64,.1);color:#fff}
+    .sb-item.active .sb-icon{stroke:var(--red);opacity:1}
+    .sb-item:hover .sb-icon{opacity:1}
+    .sb-icon{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.55;transition:opacity .16s}
+
+    .sb-footer{padding:10px;border-top:1px solid var(--sbborder);flex-shrink:0}
+    .sb-user-row{display:flex;align-items:center;gap:9px;padding:8px 12px;margin-bottom:2px}
+    .sb-av{width:26px;height:26px;border-radius:50%;background:rgba(255,51,64,.12);border:1px solid rgba(255,51,64,.28);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--red);font-family:'Montserrat',sans-serif;flex-shrink:0}
+    .sb-username{font-size:12px;color:var(--gray2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sb-signout{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:9px;font-size:12.5px;font-weight:500;color:#f87171;background:none;border:none;cursor:pointer;transition:background .16s;text-align:left;font-family:'Inter',sans-serif}
+    .sb-signout:hover{background:rgba(248,113,113,.08)}
+    .sb-signout svg{width:15px;height:15px;stroke:#f87171;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+    /* ══ MOBILE SIDEBAR ══ */
+    .sb-overlay{display:none;position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+    .sb-overlay.open{display:block}
+    #hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,.05);border:none;cursor:pointer;color:var(--gray2)}
+    #hamburger svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+    @media(max-width:767px){
+      #sidebar{position:fixed;left:0;top:36px;bottom:0;z-index:90;transform:translateX(-100%);transition:transform .28s cubic-bezier(.16,1,.3,1);height:calc(100vh - 36px)}
+      #sidebar.open{transform:translateX(0)}
+      #hamburger{display:flex}
+    }
+
+    /* ══ MAIN COLUMN ══ */
+    .main-col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+    .main-header{position:sticky;top:0;z-index:20;background:rgba(8,8,9,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:56px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .mh-left{display:flex;align-items:center;gap:10px}
+    .section-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:#fff;letter-spacing:.04em}
+    .header-date{font-size:11px;color:var(--gray)}
+
+    .content-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+    .page{max-width:860px;padding:28px 24px 80px}
+
+    /* ══ PULSE ══ */
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.72)}}
+
+    /* ══ STATUS BANNER ══ */
+    .status-banner{border-radius:16px;padding:20px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:16px;border:1px solid}
+    .status-banner.processing{background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.2)}
+    .status-banner.active{background:rgba(25,201,138,.05);border-color:rgba(25,201,138,.2)}
+    .status-banner.rejected{background:rgba(255,51,64,.05);border-color:rgba(255,51,64,.2)}
+    .status-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .status-banner.processing .status-icon{background:rgba(245,166,35,.1)}
+    .status-banner.active    .status-icon{background:rgba(25,201,138,.1)}
+    .status-banner.rejected  .status-icon{background:rgba(255,51,64,.1)}
+    .status-icon svg{width:18px;height:18px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .status-banner.processing .status-icon svg{stroke:var(--gold)}
+    .status-banner.active    .status-icon svg{stroke:var(--green)}
+    .status-banner.rejected  .status-icon svg{stroke:var(--red)}
+    .status-body{flex:1}
+    .status-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;margin-bottom:4px}
+    .status-banner.processing .status-title{color:var(--gold)}
+    .status-banner.active    .status-title{color:var(--green)}
+    .status-banner.rejected  .status-title{color:var(--red)}
+    .status-desc{font-size:12.5px;color:var(--gray);line-height:1.65}
+    .status-badge{margin-left:auto;padding:5px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0}
+    .status-banner.processing .status-badge{background:rgba(245,166,35,.12);color:var(--gold);border:1px solid rgba(245,166,35,.25)}
+    .status-banner.active    .status-badge{background:rgba(25,201,138,.12);color:var(--green);border:1px solid rgba(25,201,138,.25)}
+    .status-banner.rejected  .status-badge{background:rgba(255,51,64,.12);color:var(--red);border:1px solid rgba(255,51,64,.25)}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;margin-right:6px;animation:pulse 1.8s ease-in-out infinite;opacity:.85}
+
+    /* ══ SECTION HEADS ══ */
+    .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .sec-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:#fff;letter-spacing:.04em}
+    .sec-sub{font-size:11px;color:var(--gray)}
+
+    /* ══ STAT CARDS ══ */
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .stat-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+    .stat-label{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);margin-bottom:8px}
+    .stat-val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;color:#fff;line-height:1}
+    .stat-val.green{color:var(--green)}
+    .stat-val.gold{color:var(--gold)}
+    .stat-change{font-size:11px;color:var(--gray);margin-top:5px}
+    .stat-change .up{color:var(--green)}
+    .locked{position:relative;overflow:hidden}
+    .locked::after{content:'Activating…';position:absolute;inset:0;background:rgba(8,8,9,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gray);border-radius:14px;letter-spacing:.06em;text-transform:uppercase}
+
+    /* ══ INVESTMENT CARD ══ */
+    .inv-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:24px}
+    .inv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+    .inv-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:17px;color:#fff}
+    .inv-type{font-size:11px;color:var(--gray);margin-top:3px}
+    .inv-pill{padding:5px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .inv-pill.processing{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.2)}
+    .inv-pill.active{background:rgba(25,201,138,.1);color:var(--green);border:1px solid rgba(25,201,138,.2)}
+    .inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .inv-stat{padding:12px 14px;border-radius:11px;background:var(--card3);border:1px solid var(--border2)}
+    .inv-stat .lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+    .inv-stat .val{font-weight:700;font-size:14px;color:#fff}
+    .inv-stat .val.green{color:var(--green)}
+
+    /* ══ TIMELINE ══ */
+    .timeline{display:flex;flex-direction:column}
+    .tl-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border2)}
+    .tl-item:last-child{border-bottom:none}
+    .tl-dot-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:3px}
+    .tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .tl-dot.done{background:var(--green)}
+    .tl-dot.going{background:var(--gold);animation:pulse 1.8s ease-in-out infinite}
+    .tl-dot.pending{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.12)}
+    .tl-line{width:1.5px;flex:1;background:rgba(255,255,255,.06);margin-top:4px;min-height:18px}
+    .tl-body{flex:1}
+    .tl-label{font-size:13px;font-weight:600;color:#e2e4ed;margin-bottom:3px}
+    .tl-time{font-size:11px;color:var(--gray)}
+
+    /* ══ PANEL CARD ══ */
+    .panel-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:22px}
+
+    /* ══ FORMS ══ */
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:11.5px;font-weight:600;color:var(--gray2);margin-bottom:8px;display:block}
+    .form-input{width:100%;padding:11px 14px;background:var(--card3);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    .form-input:focus{border-color:rgba(255,255,255,.22)}
+    .form-input::placeholder{color:var(--gray)}
+    .method-row{display:flex;gap:8px}
+    .method-btn{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--card3);color:var(--gray);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+    .method-btn.active{border-color:rgba(255,51,64,.45);background:rgba(255,51,64,.07);color:var(--red)}
+    .submit-btn{width:100%;padding:13px;background:var(--red);color:#fff;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:800;letter-spacing:.06em;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s;margin-top:4px}
+    .submit-btn:hover{opacity:.86}
+    .form-note{font-size:11px;color:var(--gray);text-align:center;margin-top:10px;line-height:1.6}
+    .locked-overlay{text-align:center;padding:32px 20px}
+    .lock-icon-wrap{width:50px;height:50px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+    .lock-icon-wrap svg{width:22px;height:22px;fill:none;stroke:var(--gray);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .locked-overlay h4{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:var(--gray2);margin-bottom:6px}
+    .locked-overlay p{font-size:12px;color:var(--gray);line-height:1.6}
+    /* ══ WITHDRAWAL BALANCE CARD ══ */
+    .wd-balance-card{background:linear-gradient(135deg,rgba(25,201,138,.07) 0%,rgba(25,201,138,.03) 100%);border:1px solid rgba(25,201,138,.2);border-radius:13px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .wd-bal-info{flex:1}
+    .wd-bal-label{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+    .wd-bal-amount{font-family:'Montserrat',sans-serif;font-weight:900;font-size:26px;color:#fff;line-height:1}
+    .wd-bal-sub{font-size:11px;color:var(--gray);margin-top:7px;line-height:1.5}
+    .wd-bal-err{font-size:11.5px;color:var(--red);margin-top:8px;display:none}
+    /* ══ WITHDRAWAL PROCESSING / PAUSED STATE ══ */
+    .status-banner.withdrawing{background:linear-gradient(135deg,rgba(245,166,35,.08),rgba(245,166,35,.03));border-color:rgba(245,166,35,.2)}
+    .status-banner.withdrawing .status-icon{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.2);color:var(--gold)}
+    .paused-card{text-align:center;padding:30px 20px}
+    .paused-icon{width:54px;height:54px;border-radius:16px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .paused-icon svg{width:24px;height:24px;fill:none;stroke:var(--gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .paused-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;color:#fff;margin-bottom:8px}
+    .paused-sub{font-size:12px;color:var(--gray);line-height:1.65;max-width:340px;margin:0 auto}
+    /* ══ REINVEST CARD ══ */
+    .reinvest-card{background:linear-gradient(135deg,rgba(25,201,138,.08),rgba(25,201,138,.03));border:1px solid rgba(25,201,138,.2);border-radius:16px;padding:28px 26px;text-align:center}
+    .reinvest-icon{font-size:30px;margin-bottom:14px}
+    .reinvest-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;color:#fff;margin-bottom:8px}
+    .reinvest-sub{font-size:13px;color:var(--gray2);line-height:1.6;margin-bottom:22px;max-width:360px;margin-left:auto;margin-right:auto}
+    .reinvest-btn{display:inline-block;padding:13px 32px;background:var(--green);color:#fff;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:800;letter-spacing:.07em;border:none;border-radius:10px;cursor:pointer;text-decoration:none;transition:opacity .2s}
+    .reinvest-btn:hover{opacity:.85}
+    .reinvest-divider{width:40px;height:2px;background:rgba(25,201,138,.25);border-radius:2px;margin:18px auto}
+
+    /* ══ TABLES ══ */
+    .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);background:var(--card3);border-bottom:1px solid var(--border);white-space:nowrap}
+    td{padding:12px 14px;border-bottom:1px solid var(--border2);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.012)}
+    .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .pill-green{background:rgba(25,201,138,.1);color:var(--green);border:1px solid rgba(25,201,138,.2)}
+    .pill-gold{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.2)}
+    .pill-red{background:rgba(255,51,64,.1);color:var(--red);border:1px solid rgba(255,51,64,.2)}
+    .pill-gray{background:rgba(255,255,255,.05);color:var(--gray2);border:1px solid var(--border)}
+    .empty-state{text-align:center;padding:36px 20px;color:var(--gray);font-size:12px;opacity:.5}
+
+    /* ══ AI FEED ══ */
+    .ai-header{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+    .ai-live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s ease-in-out infinite;flex-shrink:0}
+    .ai-title-text .main{font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;color:#fff}
+    .ai-title-text .sub{font-size:10.5px;color:var(--gray);margin-top:2px}
+    .ai-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+    .ai-mini-stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+    .ai-mini-stat .lbl{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
+    .ai-mini-stat .val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;color:#fff}
+    .ai-mini-stat .val.green{color:var(--green)}
+    .feed-wrap{background:var(--card2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .feed-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border2)}
+    .feed-head-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:#fff}
+    .feed-head-sub{font-size:10.5px;color:var(--gray)}
+    .feed-list{padding:0 20px;max-height:460px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .feed-list::-webkit-scrollbar{width:4px}
+    .feed-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .feed-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border2)}
+    .feed-item:last-child{border-bottom:none}
+    .feed-item.new{animation:slideIn .35s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    .feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .feed-dot.green{background:var(--green)}
+    .feed-dot.gold{background:var(--gold)}
+    .feed-dot.blue{background:var(--blue)}
+    .feed-dot.gray{background:rgba(255,255,255,.2)}
+    .feed-body{flex:1;min-width:0}
+    .feed-cat{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+    .feed-cat.green{color:var(--green)}
+    .feed-cat.gold{color:var(--gold)}
+    .feed-cat.blue{color:var(--blue)}
+    .feed-cat.gray{color:var(--gray)}
+    .feed-text{font-size:12.5px;color:#d1d5db;line-height:1.5}
+    .feed-time{font-size:10.5px;color:var(--gray);flex-shrink:0;padding-top:2px}
+
+    /* ══ REFERRAL ══ */
+    .ref-hero{background:linear-gradient(135deg,rgba(255,51,64,.07),rgba(245,166,35,.04));border:1px solid rgba(255,51,64,.15);border-radius:16px;padding:28px 24px;margin-bottom:20px;text-align:center}
+    .ref-hero h3{font-family:'Montserrat',sans-serif;font-weight:900;font-size:20px;color:#fff;margin-bottom:6px}
+    .ref-hero p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;max-width:420px;margin-left:auto;margin-right:auto}
+    .ref-link-wrap{display:flex;gap:8px;align-items:center;background:var(--card3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:10px;max-width:500px;margin-left:auto;margin-right:auto}
+    .ref-link-txt{flex:1;font-size:11.5px;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
+    .copy-btn{padding:7px 16px;background:var(--red);color:#fff;font-size:11px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .2s;flex-shrink:0;font-family:'Montserrat',sans-serif;letter-spacing:.04em}
+    .copy-btn:hover{opacity:.85}
+    .ref-code-hint{font-size:11px;color:var(--gray)}
+    .ref-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+    .ref-stat-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:18px 16px;text-align:center}
+    .ref-stat-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:8px}
+    .ref-stat-val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:24px;color:#fff}
+    .ref-stat-val.green{color:var(--green)}
+    .ref-how{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+    .ref-how-title{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:14px}
+    .ref-step{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid var(--border2)}
+    .ref-step:last-child{border-bottom:none}
+    .ref-step-num{width:26px;height:26px;border-radius:8px;background:rgba(255,51,64,.1);border:1px solid rgba(255,51,64,.2);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:900;color:var(--red);flex-shrink:0;font-family:'Montserrat',sans-serif}
+    .ref-step-title{font-size:13px;font-weight:600;color:#e2e4ed;margin-bottom:3px}
+    .ref-step-desc{font-size:11.5px;color:var(--gray);line-height:1.55}
+
+    /* ══ RETURNS CARD ══ */
+    .ret-stats{display:grid;grid-template-columns:repeat(3,1fr)}
+    .ret-stat{text-align:center;padding:10px 4px}
+    .ret-stat:not(:last-child){border-right:1px solid var(--border2)}
+    .ret-big{font-family:'Montserrat',sans-serif;font-weight:900;font-size:24px;color:#fff;line-height:1;margin-bottom:4px}
+    .ret-lbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+    .ret-divider{height:1px;background:var(--border2);margin:14px 0}
+    .progress-outer{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:8px}
+    .progress-inner{height:100%;background:linear-gradient(90deg,var(--green),rgba(25,201,138,.45));border-radius:3px;transition:width 1.2s ease}
+    .progress-labels{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--gray);flex-wrap:wrap;gap:4px}
+    .progress-labels strong{color:#e2e4ed;font-weight:600}
+    .ret-dates{display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--border2)}
+    .rd-item{min-width:0}
+    .rd-lbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:3px}
+    .rd-val{font-size:13px;font-weight:600;color:#e2e4ed}
+    .rd-val.green{color:var(--green)}
+    .rd-arrow{color:var(--border);font-size:18px;flex-shrink:0}
+    .rd-earn{margin-left:auto;text-align:right}
+    .ret-preview-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:14px}
+    .ret-preview-text{font-size:12.5px;color:var(--gray);line-height:1.7}
+
+    @media(max-width:600px){
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .stat-grid>.stat-card:last-child{grid-column:span 2}
+      .inv-grid{grid-template-columns:1fr 1fr}
+      .inv-grid>.inv-stat:last-child{grid-column:span 2}
+      .ai-stats-row{grid-template-columns:1fr 1fr}
+      .ai-stats-row>.ai-mini-stat:last-child{grid-column:span 2}
+      .ref-stats-grid{grid-template-columns:1fr 1fr}
+      .ref-stats-grid>.ref-stat-card:last-child{grid-column:span 2}
+      .status-badge{display:none}
+      .page{padding:20px 14px 60px}
+    }
+  </style>
+</head>
+<body>
+<div class="bg"><div class="b1"></div><div class="b2"></div></div>
+<div class="bg-grid"></div>
+
+<!-- ═══════════════════ MARKET TICKER ═══════════════════ -->
+<div class="market-ticker">
+  <div class="ticker-label"><div class="tlive-dot"></div>LIVE</div>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP LAYOUT ═══════════════════ -->
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+
+    <div class="sb-brand">
+      <div class="sb-logo-icon">EF</div>
+      <div>
+        <div class="sb-logo-name">EQUIFLOW</div>
+        <div class="sb-logo-sub">Investor Portal</div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+
+      <div class="sb-item active" id="nav-portfolio" onclick="showTab('portfolio')">
+        <svg class="sb-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="6" height="18" rx="1"/><rect x="9" y="8" width="6" height="13" rx="1"/><rect x="16" y="13" width="6" height="8" rx="1"/></svg>
+        Portfolio
+      </div>
+
+      <div class="sb-item" id="nav-withdrawal" onclick="showTab('withdrawal')">
+        <svg class="sb-icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        Withdrawal
+      </div>
+
+      <div class="sb-item" id="nav-ai-feed" onclick="showTab('ai-feed')">
+        <svg class="sb-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        AI Activity
+      </div>
+
+      <div class="sb-item" id="nav-ledger" onclick="showTab('ledger')">
+        <svg class="sb-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Ledger
+      </div>
+
+      <div class="sb-item" id="nav-referral" onclick="showTab('referral')">
+        <svg class="sb-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Referral
+      </div>
+
+    </nav>
+
+    <div class="sb-footer">
+      <div class="sb-user-row">
+        <div class="sb-av" id="user-av">E</div>
+        <span class="sb-username" id="user-name-top">Investor</span>
+      </div>
+      <button class="sb-signout" onclick="logout()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- Sidebar mobile overlay -->
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── MAIN COLUMN ── -->
+  <div class="main-col">
+
+    <header class="main-header">
+      <div class="mh-left">
+        <button id="hamburger" onclick="openSidebar()">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="section-title" id="section-title">Portfolio</span>
+      </div>
+      <span class="header-date" id="header-date"></span>
+    </header>
+
+    <div class="content-scroll">
+      <div class="page">
+
+        <!-- ════════════ PORTFOLIO PANEL ════════════ -->
+        <div id="panel-portfolio">
+
+          <div class="status-banner processing" id="status-banner">
+            <div class="status-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="status-body">
+              <div class="status-title" id="banner-title"><span class="pulse-dot" style="background:var(--gold)"></span>Deposit Under Review</div>
+              <div class="status-desc" id="banner-desc">Your payment has been received and is currently being reviewed by our compliance team. Your account will be activated shortly.</div>
+            </div>
+            <div class="status-badge" id="banner-badge">Pending</div>
+          </div>
+
+          <div class="sec-head">
+            <div class="sec-title">Portfolio Overview</div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card locked" id="stat-value">
+              <div class="stat-label">Live Portfolio Value</div>
+              <div class="stat-val" id="sv-val">—</div>
+              <div class="stat-change" id="sv-change">—</div>
+            </div>
+            <div class="stat-card locked" id="stat-return">
+              <div class="stat-label">Earned So Far</div>
+              <div class="stat-val green" id="sr-val">—</div>
+              <div class="stat-change" id="sr-change">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Amount Deposited</div>
+              <div class="stat-val gold" id="sd-val">—</div>
+              <div class="stat-change" id="sd-change">Pending activation</div>
+            </div>
+          </div>
+
+          <div class="sec-head"><div class="sec-title">Active Investment</div></div>
+          <div class="inv-card">
+            <div class="inv-header">
+              <div>
+                <div class="inv-name" id="inv-name">—</div>
+                <div class="inv-type" id="inv-type">—</div>
+              </div>
+              <div class="inv-pill processing" id="inv-pill">Under Review</div>
+            </div>
+            <div class="inv-grid">
+              <div class="inv-stat"><div class="lbl">Invested</div><div class="val" id="inv-amount">—</div></div>
+              <div class="inv-stat"><div class="lbl">Method</div><div class="val" id="inv-method">—</div></div>
+              <div class="inv-stat"><div class="lbl">Submitted</div><div class="val" id="inv-date">—</div></div>
+            </div>
+          </div>
+
+
+        <!-- ════ PLAN RETURNS SECTION ════ -->
+        <div id="returns-section" style="display:none">
+          <div class="sec-head"><div class="sec-title">Plan Returns</div></div>
+          <div class="inv-card" id="returns-card"></div>
+        </div>
+
+        </div><!-- /panel-portfolio -->
+
+        <!-- ════════════ WITHDRAWAL PANEL ════════════ -->
+        <div id="panel-withdrawal" style="display:none">
+
+          <div class="sec-head">
+            <div class="sec-title">Request Withdrawal</div>
+            <div class="sec-sub">Processed within 24–48 hours</div>
+          </div>
+          <div class="panel-card" id="wd-form-card"></div>
+
+          <div class="sec-head"><div class="sec-title">Withdrawal History</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Wallet</th><th>Status</th></tr></thead>
+              <tbody id="wd-tbody"></tbody>
+            </table>
+          </div>
+
+        </div><!-- /panel-withdrawal -->
+
+        <!-- ════════════ AI ACTIVITY PANEL ════════════ -->
+        <div id="panel-ai-feed" style="display:none">
+
+          <div class="ai-header">
+            <div class="ai-live-dot"></div>
+            <div class="ai-title-text">
+              <div class="main">AI Trading Engine</div>
+              <div class="sub">Autonomous capital allocation — live feed</div>
+            </div>
+          </div>
+
+          <div class="ai-stats-row">
+            <div class="ai-mini-stat"><div class="lbl">Trades Today</div><div class="val" id="ai-trades">—</div></div>
+            <div class="ai-mini-stat"><div class="lbl">Win Rate</div><div class="val green" id="ai-winrate">—</div></div>
+            <div class="ai-mini-stat"><div class="lbl">Alpha Generated</div><div class="val green" id="ai-alpha">—</div></div>
+          </div>
+
+          <div class="feed-wrap">
+            <div class="feed-head">
+              <span class="feed-head-title">Activity Log</span>
+              <span class="feed-head-sub" id="ai-event-count">Loading…</span>
+            </div>
+            <div class="feed-list" id="feed-list"></div>
+          </div>
+
+        </div><!-- /panel-ai-feed -->
+
+        <!-- ════════════ LEDGER PANEL ════════════ -->
+        <div id="panel-ledger" style="display:none">
+
+          <div class="sec-head">
+            <div class="sec-title">Transaction Ledger</div>
+            <div class="sec-sub">All deposits &amp; withdrawals</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th><th>Note</th></tr></thead>
+              <tbody id="ledger-tbody"></tbody>
+            </table>
+          </div>
+
+        </div><!-- /panel-ledger -->
+
+        <!-- ════════════ REFERRAL PANEL ════════════ -->
+        <div id="panel-referral" style="display:none">
+
+          <div class="ref-hero">
+            <h3>Refer &amp; Earn</h3>
+            <p>Share your link — earn <strong style="color:#fff">15%</strong> of every dollar your referrals invest, credited to your portfolio.</p>
+            <div class="ref-link-wrap">
+              <span class="ref-link-txt" id="ref-link-txt">—</span>
+              <button class="copy-btn" id="copy-ref-btn" onclick="copyRefLink()">Copy Link</button>
+            </div>
+            <div class="ref-code-hint">Your code: <span id="ref-code" style="font-family:monospace;color:var(--gray2);font-weight:700">—</span></div>
+          </div>
+
+          <div class="ref-stats-grid">
+            <div class="ref-stat-card"><div class="ref-stat-lbl">Referrals Sent</div><div class="ref-stat-val" id="ref-sent">0</div></div>
+            <div class="ref-stat-card"><div class="ref-stat-lbl">Joined Waitlist</div><div class="ref-stat-val" id="ref-joined">0</div></div>
+            <div class="ref-stat-card"><div class="ref-stat-lbl">Bonus Earned</div><div class="ref-stat-val green" id="ref-bonus">$0</div></div>
+          </div>
+
+          <div class="sec-head" style="margin-top:4px"><div class="sec-title">Your Referrals</div></div>
+          <div class="table-wrap" style="margin-bottom:22px">
+            <table>
+              <thead><tr><th>Name</th><th>Status</th><th>Invested</th><th>Your Bonus (15%)</th></tr></thead>
+              <tbody id="ref-table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="ref-how">
+            <div class="ref-how-title">How it works</div>
+            <div class="ref-step">
+              <div class="ref-step-num">1</div>
+              <div><div class="ref-step-title">Share your link</div><div class="ref-step-desc">Send your unique referral link to anyone interested in private-market investing.</div></div>
+            </div>
+            <div class="ref-step">
+              <div class="ref-step-num">2</div>
+              <div><div class="ref-step-title">They join the waitlist</div><div class="ref-step-desc">Your referral signs up via the landing page and is prioritized in the review queue.</div></div>
+            </div>
+            <div class="ref-step">
+              <div class="ref-step-num">3</div>
+              <div><div class="ref-step-title">They activate their account</div><div class="ref-step-desc">Once they register with an invite code and complete a deposit, their account goes live.</div></div>
+            </div>
+            <div class="ref-step">
+              <div class="ref-step-num">4</div>
+              <div><div class="ref-step-title">You earn 15%</div><div class="ref-step-desc">You receive 15% of their total deposit as a referral bonus, credited directly to your account.</div></div>
+            </div>
+          </div>
+
+        </div><!-- /panel-referral -->
+
+      </div><!-- /page -->
+    </div><!-- /content-scroll -->
+  </div><!-- /main-col -->
+</div><!-- /app-layout -->
+
+<script>
+/* ════════════════════════════════════
+   GUARD
+════════════════════════════════════ */
+if (!localStorage.getItem('ef_current_user')) { window.location.href = 'index.html'; }
+
+/* ════════════════════════════════════
+   HELPERS
+════════════════════════════════════ */
+var $ = function(id) { return document.getElementById(id); };
+var esc = function(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+var fmt = function(n) { return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); };
+var fmtPrice = function(p) {
+  if (p < 1)   return '$' + p.toFixed(4);
+  if (p < 100) return '$' + p.toFixed(2);
+  return '$' + Number(p).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+};
+var fmtD  = function(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+var fmtDT = function(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+};
+var truncate = function(s,n) { s=String(s||''); return s.length>n ? s.substr(0,n)+'…' : s; };
+var timeAgo = function(iso) {
+  var s = Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  if (s<60)    return 'just now';
+  if (s<3600)  return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+};
+
+/* ════════════════════════════════════
+   DATA — loaded async by init()
+════════════════════════════════════ */
+var userId   = localStorage.getItem('ef_current_user');
+var userName = localStorage.getItem('ef_current_name') || 'Investor';
+
+var user = {}, dep = {}, wds = [], deps = [];
+var isActive = false, isRejected = false;
+
+/* ════════════════════════════════════
+   STATE
+════════════════════════════════════ */
+var currentTab     = 'portfolio';
+var activeWdMethod = 'usdt';
+var aiTimer        = null;
+var aiFeedItems    = [];
+var aiTradeCount   = Math.floor(Math.random()*50)+58;
+var aiWinRate      = (93.5 + Math.random()*4).toFixed(1);
+var aiAlpha        = (0.9 + Math.random()*1.6).toFixed(2);
+var userRefCode    = (userId||'UNKNOWN').substr(0,8).toUpperCase();
+var refBase        = location.href.replace(/[^\/]*$/,'');
+var refLink        = refBase + 'index.html?ref=' + userRefCode;
+
+/* ════════════════════════════════════
+   INIT UI
+════════════════════════════════════ */
+$('user-name-top').textContent = userName.split(' ')[0];
+$('user-av').textContent       = userName.charAt(0).toUpperCase();
+$('header-date').textContent   = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+/* ════════════════════════════════════
+   ASYNC INIT — loads user/deposit/withdrawal data then renders
+════════════════════════════════════ */
+async function init() {
+  user = await dbGetUser(userId) || {};
+
+  var allDeps = await dbGetDepositsByUser(userId);
+  deps = allDeps;
+  dep  = allDeps.length ? allDeps[allDeps.length - 1] : {};
+
+  wds = await dbGetWithdrawalsByUser(userId);
+
+  isActive   = (user.status === 'ACTIVE');
+  isRejected = (user.status === 'REJECTED' || dep.status === 'REJECTED');
+  if (isRejected) { window.location.replace('choose-plan.html'); return; }
+
+  renderPortfolio();
+  initTicker();
+
+  /* Real-time: reload when admin approves/rejects deposit or processes withdrawal */
+  dbListen('users', function(payload) {
+    var rec = payload.new || {};
+    if (rec.id === userId && (rec.status === 'ACTIVE' || rec.status === 'REJECTED')) {
+      window.location.reload();
+    }
+  });
+  dbListen('withdrawals', function(payload) {
+    var rec = payload.new || {};
+    if (rec.user_id === userId) {
+      window.location.reload();
+    }
+  });
+}
+
+/* ════════════════════════════════════
+   PLAN CONFIG — determines return rate & duration
+   Opportunities (per card) → 45–120% / 2 days
+   AI Starter  ($5k–$10k)  → 300% / 7 days
+   AI Growth   ($10k–$50k) → 450% / 14 days
+   AI Elite    ($50k+)     → 700% / 28 days
+════════════════════════════════════ */
+function renderPortfolio() {
+var amount = parseFloat(dep.amount) || 0;
+
+var planConfig = (function() {
+  if (!amount) return null;
+  var type = dep.type || '';
+  var plan = dep.plan || dep.tier || ''; // dep.tier is fallback for older deposits
+  // Detect opportunity type even if dep.type was not saved (older deposits)
+  var oppKeywords = ['Trillion','xAI','Gigafactory','Optimus','Neuralink','Starlink'];
+  var isOpportunity = type === 'opportunity' || oppKeywords.some(function(k){ return plan.indexOf(k) !== -1; });
+
+  if (isOpportunity) {
+    var yld = 100; // default
+    if (plan.indexOf('Trillion')   !== -1) yld = 100; // Robotaxi:  40%–120%
+    if (plan.indexOf('xAI')        !== -1) yld = 85;  // xAI:       28%–90%
+    if (plan.indexOf('Gigafactory')!== -1) yld = 45;  // Tesla:     18%–45%
+    if (plan.indexOf('Optimus')    !== -1) yld = 75;  // Optimus:   35%–80%
+    if (plan.indexOf('Neuralink')  !== -1) yld = 120; // Neuralink: 50%–140%
+    if (plan.indexOf('Starlink')   !== -1) yld = 60;  // SpaceX:    22%–60%
+    return { returnPct: yld, durationDays: 2, label: plan || 'Accessible Opportunities' };
+  }
+  // AI Capital Programs — from ai-plans.html execution cycles & target returns
+  if (plan.indexOf('Elite AI') !== -1 || amount >= 50000) {
+    return { returnPct: 700, durationDays: 28, label: 'Elite AI Program' };
+  }
+  if (plan.indexOf('Growth AI') !== -1 || amount >= 10000) {
+    return { returnPct: 450, durationDays: 14, label: 'Growth AI Program' };
+  }
+  if (plan.indexOf('Starter AI') !== -1 || amount >= 5000) {
+    return { returnPct: 300, durationDays: 7, label: 'Starter AI Program' };
+  }
+  // Fallback
+  return { returnPct: 100, durationDays: 2, label: 'Opportunity' };
+})();
+
+/* Use activated_at only when it comes AFTER this deposit was submitted
+   (i.e. admin approved this specific deposit). Otherwise fall back to
+   dep.submitted_at so new-cycle calculations don't use a stale old date. */
+var _actTs = user.activated_at ? new Date(user.activated_at).getTime() : 0;
+var _depTs = dep.submitted_at  ? new Date(dep.submitted_at).getTime()  : 0;
+var activationDate = (_actTs >= _depTs && _actTs > 0) ? user.activated_at : (dep.submitted_at || null);
+
+/* ── helpers ── */
+function fmtLive(n) {
+  return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function calcCurrentValue(base, isoDate, cfg) {
+  if (!isoDate || !cfg || !base) return base;
+  var totalHours   = cfg.durationDays * 24;
+  var hourlyRate   = base * (cfg.returnPct / 100) / totalHours;
+  var elapsedMs    = Math.max(0, Date.now() - new Date(isoDate).getTime());
+  /* Discrete hourly steps — value only increments once a full hour completes */
+  var hoursElapsed = Math.min(Math.floor(elapsedMs / (3600 * 1000)), totalHours);
+  return base + hourlyRate * hoursElapsed;
+}
+
+/* ════════════════════════════════════
+   PORTFOLIO STATS
+════════════════════════════════════ */
+/* Scope all withdrawal data to the CURRENT cycle only (after this deposit was submitted).
+   This prevents old paid withdrawals from a previous cycle corrupting the new cycle's stats. */
+var _cycleStart = _depTs; // ms timestamp — current deposit submission
+
+var _cycleWds = wds.filter(function(w){
+  return w.user_id === userId &&
+         new Date(w.requested_at || 0).getTime() >= _cycleStart;
+});
+
+/* Total withdrawn this cycle (PENDING + PAID, not REJECTED) */
+var totalWithdrawn = _cycleWds
+  .filter(function(w){ return w.status !== 'REJECTED'; })
+  .reduce(function(s,w){ return s+(w.amount||0); }, 0);
+
+var pendingWds           = _cycleWds.filter(function(w){ return w.status === 'PENDING'; });
+var paidWds              = _cycleWds.filter(function(w){ return w.status === 'PAID'; });
+var hasPendingWithdrawal = pendingWds.length > 0;
+var pendingWdAmount      = pendingWds.reduce(function(s,w){ return s+(w.amount||0); }, 0);
+/* fully withdrawn = paid out this cycle and nothing pending */
+var hasPaidWithdrawal    = paidWds.length > 0 && !hasPendingWithdrawal;
+
+$('sd-val').textContent = amount ? fmt(amount) : '—';
+
+if (isActive && planConfig && activationDate) {
+  $('stat-value').classList.remove('locked');
+  $('stat-return').classList.remove('locked');
+  $('sd-change').textContent = 'Fully allocated';
+  if (hasPendingWithdrawal) {
+    /* ── PAUSED: show frozen value, no ticker ── */
+    $('sv-val').textContent  = fmtLive(pendingWdAmount);
+    $('sv-change').innerHTML = '<span style="color:var(--gold);font-size:10.5px">⏸ Withdrawal in progress</span>';
+    $('sr-val').textContent  = '—';
+    $('sr-change').innerHTML = '<span style="color:var(--gray);font-size:10.5px">Paused during withdrawal</span>';
+  } else if (hasPaidWithdrawal) {
+    /* ── COMPLETED: show zeroed portfolio ── */
+    $('sv-val').textContent  = fmtLive(0);
+    $('sv-change').innerHTML = '<span style="color:var(--green);font-size:10.5px">✓ Withdrawal completed</span>';
+    $('sr-val').textContent  = '—';
+    $('sr-change').innerHTML = '<span style="color:var(--gray);font-size:10.5px">Ready to reinvest</span>';
+  } else {
+    /* ── ACTIVE & GROWING ── */
+    var _rawVal     = calcCurrentValue(amount, activationDate, planConfig);
+    var _initVal    = Math.max(0, _rawVal - totalWithdrawn);   // remaining in portfolio
+    var _initEarned = Math.max(0, _rawVal - amount);           // total profit accrued (not reduced by withdrawals)
+    $('sv-val').textContent  = fmtLive(_initVal);
+    $('sv-change').innerHTML = '<span style="color:var(--green);font-size:10.5px">▲ Growing</span>';
+    $('sr-val').textContent  = '+'+fmtLive(_initEarned);
+    $('sr-change').innerHTML = '<span class="up">↑ Growing every hour</span>';
+  }
+} else if (isActive) {
+  /* fallback — no plan config */
+  $('stat-value').classList.remove('locked');
+  $('stat-return').classList.remove('locked');
+  $('sd-change').textContent = 'Fully allocated';
+  if (!hasPendingWithdrawal && !hasPaidWithdrawal) {
+    var _r = Math.max(0, +(amount * 0.22).toFixed(2) - totalWithdrawn);
+    $('sv-val').textContent  = fmt(amount + _r);
+    $('sv-change').innerHTML = '<span class="up">↑ 22% since activation</span>';
+    $('sr-val').textContent  = '+'+fmt(_r);
+    $('sr-change').innerHTML = '<span class="up">↑ On track</span>';
+  }
+}
+
+/* ════════════════════════════════════
+   LIVE VALUE TICKER
+════════════════════════════════════ */
+var valueTimer = null;
+
+function updateLiveValue() {
+  if (!isActive || !planConfig || !activationDate || !amount) return;
+  /* Re-read withdrawals each tick so state is always fresh */
+  var _wdNow = wds; /* already loaded in init() */
+  /* If a withdrawal is pending, portfolio is paused — don't tick */
+  var _wdPending = _wdNow.filter(function(w){ return w.user_id===userId && w.status==='PENDING'; });
+  if (_wdPending.length > 0) return;
+  var _wdTotal = _wdNow
+    .filter(function(w){
+      return w.user_id===userId &&
+             w.status!=='REJECTED' &&
+             new Date(w.requested_at||0).getTime() >= _cycleStart;
+    })
+    .reduce(function(s,w){ return s+(w.amount||0); }, 0);
+  var _rawVal = calcCurrentValue(amount, activationDate, planConfig);
+  var val    = Math.max(0, _rawVal - _wdTotal);   // remaining portfolio balance
+  var earned = Math.max(0, _rawVal - amount);      // total profit accrued so far
+  var totalMs  = planConfig.durationDays * 24 * 3600 * 1000;
+  var elapsed  = Math.max(0, Math.min(Date.now() - new Date(activationDate).getTime(), totalMs));
+  var pct      = (elapsed / totalMs) * 100;
+  var dayEl    = Math.floor(elapsed / (24*3600*1000));
+  var dayRem   = Math.max(0, Math.ceil(planConfig.durationDays - elapsed/(24*3600*1000)));
+
+  var svEl = $('sv-val'); if (svEl) svEl.textContent = fmtLive(val);
+  var srEl = $('sr-val'); if (srEl) srEl.textContent = '+'+fmtLive(earned);
+  var pb = $('prog-bar');           if (pb) pb.style.width = Math.min(100,pct).toFixed(3)+'%';
+  var pp = $('prog-pct-label');     if (pp) pp.textContent = pct.toFixed(1)+'% complete';
+  var pd = $('prog-day-label');     if (pd) pd.innerHTML = 'Day '+dayEl+' of '+planConfig.durationDays+' · <strong>'+dayRem+' days remaining</strong>';
+}
+
+function startValueTicker() {
+  updateLiveValue();
+  /* Value updates once per hour — check every 60s so we catch each new hour within 1 minute */
+  if (!valueTimer) valueTimer = setInterval(updateLiveValue, 60000);
+}
+
+/* ════════════════════════════════════
+   RETURNS CARD
+════════════════════════════════════ */
+function renderReturnsCard() {
+  var section = $('returns-section');
+  var card    = $('returns-card');
+  if (!amount || !planConfig) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  var totalReturn = amount * (planConfig.returnPct / 100);
+  var targetValue = amount + totalReturn;
+  var hourlyRate  = totalReturn / (planConfig.durationDays * 24);
+
+  if (isActive && activationDate) {
+
+    /* ── WITHDRAWAL PAID: show reinvestment prompt ── */
+    if (hasPaidWithdrawal) {
+      section.style.display = 'block';
+      var _totalPaid = paidWds.reduce(function(s,w){ return s+(w.amount||0); }, 0);
+      card.innerHTML =
+        '<div class="reinvest-card">'
+        +'<div class="reinvest-icon">🎉</div>'
+        +'<div class="reinvest-title">Your funds have been paid out</div>'
+        +'<div class="reinvest-divider"></div>'
+        +'<div class="reinvest-sub">'
+          +'You successfully withdrew <strong style="color:#fff">'+fmtLive(_totalPaid)+'</strong> from your portfolio. '
+          +'Your EquiFlow account is ready — would you like to start a new investment plan and grow your capital again?'
+        +'</div>'
+        +'<a class="reinvest-btn" href="choose-plan.html">Start a New Investment →</a>'
+        +'</div>';
+      return;
+    }
+
+    /* ── WITHDRAWAL PENDING: show paused state ── */
+    if (hasPendingWithdrawal) {
+      section.style.display = 'block';
+      card.innerHTML =
+        '<div class="paused-card">'
+        +'<div class="paused-icon"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>'
+        +'<div class="paused-title">Portfolio Paused</div>'
+        +'<div class="paused-sub">Your withdrawal of <strong style="color:#fff">'+fmtLive(pendingWdAmount)+'</strong> is being processed by our team. '
+          +'Returns are paused until the transfer is complete — you\'ll be notified once funds are sent.</div>'
+        +'</div>';
+      return; /* no ticker */
+    }
+
+    /* ── NORMAL ACTIVE STATE ── */
+    var actDate = new Date(activationDate);
+    var tgtDate = new Date(actDate.getTime() + planConfig.durationDays * 24 * 3600 * 1000);
+    var totalMs = planConfig.durationDays * 24 * 3600 * 1000;
+    var elapsed = Math.max(0, Math.min(Date.now() - actDate.getTime(), totalMs));
+    var pct     = (elapsed / totalMs) * 100;
+    var dayEl   = Math.floor(elapsed / (24*3600*1000));
+    var dayRem  = Math.max(0, Math.ceil(planConfig.durationDays - elapsed/(24*3600*1000)));
+    var actStr  = actDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var tgtStr  = tgtDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+    var isWeekPlan = planConfig.durationDays >= 7 && planConfig.durationDays % 7 === 0;
+    card.innerHTML =
+      '<div class="ret-stats">'
+      +'<div class="ret-stat"><div class="ret-big" style="color:var(--green)">'+planConfig.returnPct+'%</div><div class="ret-lbl">Target Return</div></div>'
+      +'<div class="ret-stat"><div class="ret-big">'+(isWeekPlan ? planConfig.durationDays/7 : planConfig.durationDays)+'</div><div class="ret-lbl">'+(isWeekPlan ? 'Week Plan' : 'Day Plan')+'</div></div>'
+      +'<div class="ret-stat"><div class="ret-big" style="color:var(--gold)">'+fmt(targetValue)+'</div><div class="ret-lbl">Target Value</div></div>'
+      +'</div>'
+      +'<div class="ret-divider"></div>'
+      +'<div class="progress-outer"><div class="progress-inner" id="prog-bar" style="width:'+pct.toFixed(3)+'%"></div></div>'
+      +'<div class="progress-labels">'
+        +'<span id="prog-pct-label">'+pct.toFixed(1)+'% complete</span>'
+        +'<span id="prog-day-label">Day '+dayEl+' of '+planConfig.durationDays+' · <strong>'+dayRem+' days remaining</strong></span>'
+      +'</div>'
+      +'<div class="ret-dates">'
+        +'<div class="rd-item"><div class="rd-lbl">Activated</div><div class="rd-val">'+actStr+'</div></div>'
+        +'<div class="rd-arrow">→</div>'
+        +'<div class="rd-item"><div class="rd-lbl">Target Date</div><div class="rd-val">'+tgtStr+'</div></div>'
+      +'</div>';
+    startValueTicker();
+  } else {
+    var isWeekPlanP = planConfig.durationDays >= 7 && planConfig.durationDays % 7 === 0;
+    var durStr = isWeekPlanP ? (planConfig.durationDays/7)+' week'+(planConfig.durationDays>7?'s':'') : planConfig.durationDays+' days';
+    card.innerHTML =
+      '<div class="ret-preview-label">Estimated Returns — pending activation</div>'
+      +'<div class="ret-stats">'
+      +'<div class="ret-stat"><div class="ret-big" style="color:var(--green)">'+planConfig.returnPct+'%</div><div class="ret-lbl">Target Return</div></div>'
+      +'<div class="ret-stat"><div class="ret-big">'+(isWeekPlanP ? planConfig.durationDays/7 : planConfig.durationDays)+'</div><div class="ret-lbl">'+(isWeekPlanP ? 'Week Plan' : 'Day Plan')+'</div></div>'
+      +'<div class="ret-stat"><div class="ret-big" style="color:var(--gold)">'+fmt(targetValue)+'</div><div class="ret-lbl">Target Value</div></div>'
+      +'</div>'
+      +'<div class="ret-divider"></div>'
+      +'<div class="ret-preview-text">'
+        +'Once approved, your <strong style="color:#fff">'+fmt(amount)+'</strong> will grow to '
+        +'<strong style="color:var(--green)">'+fmt(targetValue)+'</strong> in <strong style="color:#fff">'+durStr+'</strong>.'
+      +'</div>';
+  }
+}
+renderReturnsCard();
+
+/* ════════════════════════════════════
+   INVESTMENT CARD
+════════════════════════════════════ */
+$('inv-name').textContent   = dep.tier || user.tier_label || '—';
+var _invTypeLabel = dep.type === 'opportunity' ? 'Accessible Opportunities'
+                  : dep.type === 'ai-program'  ? 'AI Growth Capital Program'
+                  : planConfig                  ? planConfig.label
+                  : 'Investment Plan';
+$('inv-type').textContent   = _invTypeLabel;
+$('inv-amount').textContent = amount ? fmt(amount) : '—';
+$('inv-method').textContent = dep.method || '—';
+if (dep.submitted_at) {
+  $('inv-date').textContent = new Date(dep.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+/* ════════════════════════════════════
+   STATUS BANNER
+════════════════════════════════════ */
+(function() {
+  var banner = $('status-banner');
+  if (isActive) {
+    if (hasPendingWithdrawal) {
+      banner.className = 'status-banner withdrawing';
+      banner.querySelector('.status-icon').innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+      $('banner-title').innerHTML  = '<span class="pulse-dot" style="background:var(--gold)"></span>Withdrawal Processing';
+      $('banner-desc').textContent = 'Your withdrawal of '+fmtLive(pendingWdAmount)+' is under review by our team. Your portfolio is paused and will resume or close once the transfer is complete.';
+      $('banner-badge').textContent = 'Processing';
+      $('inv-pill').className  = 'inv-pill processing';
+      $('inv-pill').textContent = 'Withdrawing';
+    } else if (hasPaidWithdrawal) {
+      banner.className = 'status-banner active';
+      banner.querySelector('.status-icon').innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+      $('banner-title').innerHTML  = 'Withdrawal Complete';
+      $('banner-desc').textContent = 'Your funds have been successfully transferred. Start a new plan whenever you\'re ready to grow your portfolio again.';
+      $('banner-badge').textContent = 'Paid Out';
+      $('inv-pill').className  = 'inv-pill active';
+      $('inv-pill').textContent = 'Completed';
+    } else {
+      banner.className = 'status-banner active';
+      banner.querySelector('.status-icon').innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>';
+      $('banner-title').innerHTML  = 'Account Active';
+      $('banner-desc').textContent = 'Your deposit has been verified and your portfolio is live. Returns are accruing in real time.';
+      $('banner-badge').textContent = 'Active';
+      $('inv-pill').className  = 'inv-pill active';
+      $('inv-pill').textContent = 'Active';
+    }
+  }
+})();
+
+} /* end renderPortfolio() */
+
+/* ════════════════════════════════════
+   SIDEBAR MOBILE
+════════════════════════════════════ */
+function openSidebar()  { $('sidebar').classList.add('open'); $('sb-overlay').classList.add('open'); }
+function closeSidebar() { $('sidebar').classList.remove('open'); $('sb-overlay').classList.remove('open'); }
+
+/* ════════════════════════════════════
+   TABS
+════════════════════════════════════ */
+var TAB_IDS = ['portfolio','withdrawal','ai-feed','ledger','referral'];
+var TAB_TITLES = {portfolio:'Portfolio',withdrawal:'Withdrawal','ai-feed':'AI Activity',ledger:'Ledger',referral:'Referral'};
+
+function showTab(name) {
+  if (currentTab === 'ai-feed' && name !== 'ai-feed') {
+    clearTimeout(aiTimer);
+    aiTimer = null;
+  }
+  currentTab = name;
+  closeSidebar();
+  TAB_IDS.forEach(function(t) {
+    $('panel-'+t).style.display = (t===name) ? 'block' : 'none';
+    var n = $('nav-'+t);
+    if (n) n.classList.toggle('active', t===name);
+  });
+  $('section-title').textContent = TAB_TITLES[name] || name;
+  /* scroll content back to top */
+  var cs = document.querySelector('.content-scroll');
+  if (cs) cs.scrollTop = 0;
+  if (name === 'withdrawal') renderWithdrawal();
+  if (name === 'ai-feed')    renderAIFeed();
+  if (name === 'ledger')     renderLedger();   /* async — fire and forget */
+  if (name === 'referral')   renderReferral(); /* async — fire and forget */
+}
+
+/* ════════════════════════════════════
+   WITHDRAWAL
+════════════════════════════════════ */
+function renderWithdrawal() {
+  var fc = $('wd-form-card');
+  if (!isActive) {
+    fc.innerHTML =
+      '<div class="locked-overlay">'
+      +'<div class="lock-icon-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>'
+      +'<h4>Withdrawals Locked</h4>'
+      +'<p>'+(isRejected ? 'Your deposit was declined. Please contact support or submit a new deposit.' : 'Your account must be active before you can request a withdrawal.')+'</p>'
+      +'</div>';
+  } else {
+    var _liveNow     = calcCurrentValue(amount, activationDate, planConfig) || 0;
+    /* Scope to current cycle so previous-cycle withdrawals don't reduce fresh balance */
+    var _usedAmt     = wds.filter(function(w){
+                            return w.user_id===userId && w.status!=='REJECTED' &&
+                                   new Date(w.requested_at||0).getTime() >= _cycleStart;
+                          }).reduce(function(s,w){ return s+(w.amount||0); }, 0);
+    var _availBal    = Math.max(0, _liveNow - _usedAmt);
+    var _pendingAmt  = wds.filter(function(w){
+                            return w.user_id===userId && w.status==='PENDING' &&
+                                   new Date(w.requested_at||0).getTime() >= _cycleStart;
+                          }).reduce(function(s,w){ return s+(w.amount||0); }, 0);
+    var _noBalance = _availBal <= 0;
+    fc.innerHTML =
+      '<div class="wd-balance-card">'
+      +'<div class="wd-bal-info">'
+      +'<div class="wd-bal-label">Total Portfolio Value</div>'
+      +'<div class="wd-bal-amount">'+fmtLive(_liveNow)+'</div>'
+      +'<div class="wd-bal-sub">'
+        +(_pendingAmt>0 ? 'Pending withdrawal: '+fmt(_pendingAmt)+'&nbsp;·&nbsp;' : '')
+        +'Available: '+fmtLive(_availBal)
+      +'</div>'
+      +'</div>'
+      +'</div>'
+      +(_noBalance
+        ? '<p class="form-note" style="text-align:left;color:var(--gray2)">You have a pending withdrawal being processed. Check back once it\'s settled.</p>'
+        : '<div class="form-group"><label class="form-label">Payment Method</label>'
+          +'<div class="method-row"><button class="method-btn active" id="wm-usdt" onclick="setWdMethod(\'usdt\')">USDT (TRC20)</button>'
+          +'<button class="method-btn" id="wm-btc" onclick="setWdMethod(\'btc\')">Bitcoin (BTC)</button></div></div>'
+          +'<div class="form-group"><label class="form-label">Receiving Wallet Address</label>'
+          +'<input class="form-input" type="text" id="wd-wallet" placeholder="Enter your wallet address"/></div>'
+          +'<button class="submit-btn" onclick="submitWithdrawal('+_availBal.toFixed(2)+')">Withdraw '+fmtLive(_availBal)+'</button>'
+          +'<p class="form-note">Your full portfolio balance will be sent to the address above. Processed within 24–48 hours.</p>'
+      );
+  }
+  var myWds = wds.filter(function(w){ return w.user_id===userId; }).slice().reverse();
+  $('wd-tbody').innerHTML = myWds.length
+    ? myWds.map(function(w) {
+        var st=w.status||'PENDING';
+        var pill=st==='PAID'?'<span class="pill pill-green">Paid</span>':st==='REJECTED'?'<span class="pill pill-red">Rejected</span>':'<span class="pill pill-gold">Pending</span>';
+        return '<tr>'
+          +'<td style="font-size:12px;color:var(--gray2)">'+fmtDT(w.requested_at)+'</td>'
+          +'<td style="font-weight:700;color:var(--gold)">'+fmt(w.amount)+'</td>'
+          +'<td style="font-size:12px">'+esc(w.method||'—')+'</td>'
+          +'<td style="font-family:monospace;font-size:11px;color:var(--gray)">'+truncate(w.wallet||'—',20)+'</td>'
+          +'<td>'+pill+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="5"><div class="empty-state">No withdrawal requests yet</div></td></tr>';
+}
+
+function setWdMethod(m) {
+  activeWdMethod = m;
+  var u=$('wm-usdt'), b=$('wm-btc');
+  if(u) u.classList.toggle('active', m==='usdt');
+  if(b) b.classList.toggle('active', m==='btc');
+}
+
+async function submitWithdrawal(wdAmt) {
+  var walEl=$('wd-wallet');
+  if (!walEl) return;
+  var wallet=walEl.value.trim();
+  if (!wallet) { alert('Please enter your wallet address.'); return; }
+  wdAmt = parseFloat(wdAmt);
+  if (!wdAmt || wdAmt <= 0) { alert('No available balance to withdraw.'); return; }
+
+  var newWd = {
+    id:           genId(),
+    user_id:      userId,
+    amount:       wdAmt,
+    wallet:       wallet,
+    method:       activeWdMethod === 'usdt' ? 'USDT (TRC20)' : 'Bitcoin (BTC)',
+    status:       'PENDING',
+    requested_at: new Date().toISOString(),
+    note:         ''
+  };
+  await dbCreateWithdrawal(newWd);
+  await dbAddLog('withdrawal_request', 'Withdrawal request: ' + fmtLive(wdAmt), userId, wdAmt);
+
+  alert('Withdrawal of ' + fmtLive(wdAmt) + ' submitted. Our team will process it within 24–48 hours.');
+  window.location.reload();
+}
+
+/* ════════════════════════════════════
+   AI ACTIVITY FEED
+════════════════════════════════════ */
+var AI_TPL = [
+  {cat:'TRADE',    col:'green',items:['Position opened: NVIDIA Corp — {n} shares @ ${p}','Long entered: Tesla Motors — {a} risk-adjusted','Trade executed: Apple Inc. — momentum breakout +{pct}%','Buy order filled: Meta Platforms @ ${p} — {a} deployed','Position opened: Microsoft Corp — {a} allocated via ML signal']},
+  {cat:'SIGNAL',   col:'blue', items:['Bullish breakout detected: {sym} — volume surge {pct}%','RSI oversold: {sym} @ {rsi} — entry zone confirmed','Sentiment score: {sym} rated {sc}/10 (strong positive)','MACD crossover: {sym} — upside momentum confirmed','Pattern match: {sym} cup-and-handle — 87% historical accuracy']},
+  {cat:'ANALYSIS', col:'gold', items:['Market scan complete — {n} high-probability setups found','Sector rotation signal: Tech weighting increased +{pct}%','Macro overlay updated: Fed tone neutral — duration extended','Correlation matrix recalculated — {pct}% portfolio de-risked','Earnings model: {sym} consensus beat probability {pct}%']},
+  {cat:'RISK',     col:'gray', items:['Portfolio beta: {b} — within target 0.75–1.05 band','Max drawdown check passed — daily VaR at {pct}%','Stop-loss layers verified across {n} active positions','Volatility regime: Low — position sizing increased 14%','Single-asset cap enforced — no position exceeds {pct}% of NAV']},
+  {cat:'REBALANCE',col:'blue', items:['Portfolio rebalanced — {pct}% efficiency gain applied','{n} positions adjusted — drift correction complete','Tax-loss harvest: ${a} in realized losses captured','Cash deployment: {pct}% idle capital allocated to top signals','Factor exposure normalized — value/growth tilt optimized']},
+];
+var AI_SYMS = ['NVDA','TSLA','AAPL','META','MSFT','AMZN','GOOG','AMD','PLTR','SPY','QQQ'];
+
+function genAiEvent(historical) {
+  var tpl=AI_TPL[Math.floor(Math.random()*AI_TPL.length)];
+  var txt=tpl.items[Math.floor(Math.random()*tpl.items.length)];
+  var sym=AI_SYMS[Math.floor(Math.random()*AI_SYMS.length)];
+  txt=txt.replace(/{sym}/g,sym).replace(/{p}/g,(Math.random()*900+80).toFixed(2))
+    .replace(/{pct}/g,(Math.random()*9+1).toFixed(1)).replace(/{n}/g,Math.floor(Math.random()*120+8))
+    .replace(/{a}/g,'$'+Math.floor(Math.random()*18000+2000).toLocaleString())
+    .replace(/{rsi}/g,(Math.random()*12+22).toFixed(1)).replace(/{sc}/g,(Math.random()*2+7).toFixed(1))
+    .replace(/{b}/g,(Math.random()*0.35+0.72).toFixed(2));
+  var secsAgo=historical?Math.floor(Math.random()*5400):0;
+  return {cat:tpl.cat,col:tpl.col,text:txt,ts:new Date(Date.now()-secsAgo*1000).toISOString(),fresh:!historical};
+}
+
+function paintFeed() {
+  var list=$('feed-list'); if (!list) return;
+  list.innerHTML=aiFeedItems.map(function(ev,i){
+    return '<div class="feed-item'+(i===0&&ev.fresh?' new':'')+'">'
+      +'<div class="feed-dot '+ev.col+'"></div>'
+      +'<div class="feed-body"><div class="feed-cat '+ev.col+'">'+esc(ev.cat)+'</div>'
+      +'<div class="feed-text">'+esc(ev.text)+'</div></div>'
+      +'<div class="feed-time">'+timeAgo(ev.ts)+'</div></div>';
+  }).join('');
+  $('ai-event-count').textContent=aiFeedItems.length+' events';
+}
+
+function scheduleAiEvent() {
+  aiTimer=setTimeout(function(){
+    if (currentTab!=='ai-feed') return;
+    aiFeedItems.unshift(genAiEvent(false));
+    if (aiFeedItems.length>60) aiFeedItems.pop();
+    aiTradeCount++;
+    $('ai-trades').textContent=aiTradeCount;
+    paintFeed();
+    scheduleAiEvent();
+  }, Math.floor(Math.random()*4000)+2500);
+}
+
+function renderAIFeed() {
+  if (!isActive) {
+    $('ai-trades').textContent  = '—';
+    $('ai-winrate').textContent = '—';
+    $('ai-alpha').textContent   = '—';
+    $('feed-list').innerHTML =
+      '<div class="locked-overlay">'
+      +'<div class="lock-icon-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>'
+      +'<h4>Engine Locked</h4>'
+      +'<p>The AI Trading Engine activates once your deposit is confirmed. You\'ll have full access to live trade data the moment your account goes live.</p>'
+      +'</div>';
+    $('ai-event-count').textContent = '';
+    return;
+  }
+  $('ai-trades').textContent  = aiTradeCount;
+  $('ai-winrate').textContent = aiWinRate+'%';
+  $('ai-alpha').textContent   = '+'+aiAlpha+'%';
+  if (aiFeedItems.length===0) {
+    for (var i=0;i<12;i++) aiFeedItems.push(genAiEvent(true));
+    aiFeedItems.sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+  }
+  paintFeed();
+  if (!aiTimer) scheduleAiEvent();
+}
+
+/* ════════════════════════════════════
+   LEDGER
+════════════════════════════════════ */
+async function renderLedger() {
+  var myDeps   = deps.filter(function(d){ return d.user_id===userId; });
+  var myWdList = wds.filter(function(w){ return w.user_id===userId; });
+  var rows = [];
+
+  /* Deposits & withdrawals */
+  myDeps.forEach(function(d){
+    rows.push({ts:d.submitted_at, type:'Deposit', amount:d.amount, method:d.method||'—', status:d.status||'—', note:d.note||'—'});
+  });
+  myWdList.forEach(function(w){
+    rows.push({ts:w.requested_at, type:'Withdrawal', amount:w.amount, method:w.method||'—', status:w.status||'—', note:w.note||'—'});
+  });
+
+  /* ── Referral bonus records (15% of each active referred deposit) ── */
+  await (async function() {
+    var _wl = await dbGetWaitlist();
+    var _au = await dbGetAllUsers();
+    var _ad = await dbGetAllDeposits();
+    var _refs = _wl.filter(function(e){ return e.ref_by === userRefCode && e.status === 'REGISTERED'; });
+    _refs.forEach(function(entry) {
+      var ic = (entry.invite_code || '').toUpperCase();
+      var refUser = _au.find(function(u){ return (u.invite_code||'').toUpperCase() === ic; });
+      if (!refUser) return;
+      var refDep = _ad.filter(function(d){ return d.user_id === refUser.id && d.status === 'ACTIVE'; }).pop();
+      if (!refDep || !refDep.amount) return;
+      var bonus = +(parseFloat(refDep.amount) * 0.15).toFixed(2);
+      rows.push({
+        ts:     refDep.submitted_at || new Date().toISOString(),
+        type:   'Referral Bonus',
+        amount: bonus,
+        method: 'Referral',
+        status: 'CREDITED',
+        note:   '15% of ' + fmt(refDep.amount) + ' from ' + esc(refUser.name || refUser.email)
+      });
+    });
+  })();
+
+  /* ── Virtual daily profit records ── */
+  if (isActive && activationDate && planConfig && amount) {
+    var _dailyProfit  = amount * (planConfig.returnPct / 100) / planConfig.durationDays;
+    var _actMs        = new Date(activationDate).getTime();
+    var _daysElapsed  = Math.min(
+      Math.floor((Date.now() - _actMs) / (24 * 3600 * 1000)),
+      planConfig.durationDays
+    );
+    for (var _d = 0; _d < _daysElapsed; _d++) {
+      var _dayEndMs = _actMs + (_d + 1) * 24 * 3600 * 1000;
+      rows.push({
+        ts:     new Date(_dayEndMs).toISOString(),
+        type:   'Daily Return',
+        amount: _dailyProfit,
+        method: planConfig.label || 'Plan',
+        status: 'CREDITED',
+        note:   'Day ' + (_d + 1) + ' of ' + planConfig.durationDays
+      });
+    }
+  }
+
+  rows.sort(function(a,b){ return new Date(b.ts) - new Date(a.ts); });
+
+  $('ledger-tbody').innerHTML = rows.length
+    ? rows.map(function(r){
+        var st = r.status;
+        var pill = (st==='PROCESSING'||st==='PENDING') ? '<span class="pill pill-gold">'+esc(st)+'</span>'
+          : (st==='ACTIVE'||st==='PAID')               ? '<span class="pill pill-green">'+esc(st)+'</span>'
+          : st==='CREDITED'                             ? '<span class="pill pill-green">Credited</span>'
+          : st==='REJECTED'                             ? '<span class="pill pill-red">Rejected</span>'
+          : '<span class="pill pill-gray">'+esc(st)+'</span>';
+        var tc = r.type==='Deposit'         ? 'var(--green)'
+               : r.type==='Daily Return'    ? 'var(--green)'
+               : r.type==='Referral Bonus'  ? 'var(--green)'
+               : 'var(--gold)';
+        var amtPrefix = r.type==='Withdrawal' ? '' : '+';
+        return '<tr>'
+          +'<td style="font-size:12px;color:var(--gray2)">'+fmtDT(r.ts)+'</td>'
+          +'<td style="font-size:12.5px;font-weight:700;color:'+tc+'">'+esc(r.type)+'</td>'
+          +'<td style="font-weight:700;color:'+tc+'">'+amtPrefix+fmt(r.amount)+'</td>'
+          +'<td style="font-size:12px;color:var(--gray2)">'+esc(r.method)+'</td>'
+          +'<td>'+pill+'</td>'
+          +'<td style="font-size:11px;color:var(--gray)">'+esc(r.note)+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="6"><div class="empty-state">No transactions yet</div></td></tr>';
+}
+
+/* ════════════════════════════════════
+   REFERRAL
+════════════════════════════════════ */
+async function renderReferral() {
+  $('ref-code').textContent     = userRefCode;
+  $('ref-link-txt').textContent = refLink;
+
+  var wl       = await dbGetWaitlist();
+  var allUsers = await dbGetAllUsers();
+  var allDeps  = await dbGetAllDeposits();
+
+  /* All waitlist entries that used this user's referral link */
+  var refs = wl.filter(function(e){ return e.ref_by === userRefCode; });
+  /* Those who completed registration */
+  var registered = refs.filter(function(e){ return e.status === 'REGISTERED'; });
+
+  /* For each registered referral, find their user account + deposit */
+  var totalBonus = 0;
+  var refRows = [];
+  registered.forEach(function(entry) {
+    var ic = (entry.invite_code || '').toUpperCase();
+    var refUser = allUsers.find(function(u){ return (u.invite_code||'').toUpperCase() === ic; });
+    if (!refUser) {
+      refRows.push({ name: entry.email, status: 'Registered', invested: 0, bonus: 0 });
+      return;
+    }
+    /* Find their most recent active deposit */
+    var refDep = allDeps.filter(function(d){ return d.user_id === refUser.id; }).pop();
+    var invested = (refDep && refDep.status === 'ACTIVE') ? (parseFloat(refDep.amount)||0) : 0;
+    var bonus = +(invested * 0.15).toFixed(2);
+    totalBonus += bonus;
+    refRows.push({
+      name:     refUser.name || refUser.email,
+      status:   refUser.status || 'REGISTERED',
+      invested: invested,
+      bonus:    bonus
+    });
+  });
+
+  $('ref-sent').textContent   = refs.length;
+  $('ref-joined').textContent = registered.length;
+  $('ref-bonus').textContent  = fmtLive(totalBonus);
+
+  var tbody = $('ref-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = refRows.length
+    ? refRows.map(function(r){
+        var statusPill = r.status === 'ACTIVE'
+          ? '<span class="pill pill-green">Active</span>'
+          : '<span class="pill pill-gold">Registered</span>';
+        var bonusCell = r.invested > 0
+          ? '<span style="color:var(--green);font-weight:700">+'+fmtLive(r.bonus)+'</span>'
+          : '<span style="color:var(--gray)">Pending deposit</span>';
+        return '<tr>'
+          +'<td style="font-weight:600">'+esc(r.name)+'</td>'
+          +'<td>'+statusPill+'</td>'
+          +'<td style="color:var(--gray2)">'+( r.invested ? fmt(r.invested) : '—' )+'</td>'
+          +'<td>'+bonusCell+'</td>'
+          +'</tr>';
+      }).join('')
+    : '<tr><td colspan="4"><div class="empty-state">No referrals yet — share your link to get started</div></td></tr>';
+}
+
+function copyRefLink() {
+  try {
+    navigator.clipboard.writeText(refLink);
+    var btn=$('copy-ref-btn');
+    btn.textContent='Copied!';
+    setTimeout(function(){btn.textContent='Copy Link';},2000);
+  } catch(e) { alert('Your referral link:\n'+refLink); }
+}
+
+/* ════════════════════════════════════
+   MARKET TICKER
+════════════════════════════════════ */
+var TICKERS=[
+  {sym:'BTC', price:105420,chg:2.30},{sym:'ETH', price:4182,  chg:1.80},
+  {sym:'NVDA',price:1248,  chg:3.10},{sym:'TSLA',price:318,   chg:-0.70},
+  {sym:'SOL', price:198,   chg:4.20},{sym:'SPX', price:5892,  chg:0.40},
+  {sym:'AAPL',price:231,   chg:0.90},{sym:'XRP', price:0.9380,chg:-1.20},
+  {sym:'AMD', price:184,   chg:2.50},{sym:'BNB', price:642,   chg:1.10},
+];
+
+function buildTickerItem(t) {
+  var up=t.chg>=0;
+  return '<div class="ticker-item">'
+    +'<span class="ti-sym">'+t.sym+'</span>'
+    +'<span class="ti-price" data-ticker="'+t.sym+'-p">'+fmtPrice(t.price)+'</span>'
+    +'<span class="ti-chg '+(up?'up':'dn')+'" data-ticker="'+t.sym+'-c">'+(up?'▲':'▼')+' '+Math.abs(t.chg).toFixed(2)+'%</span>'
+    +'</div>';
+}
+
+function initTicker() {
+  var html=TICKERS.map(buildTickerItem).join('');
+  $('ticker-track').innerHTML=html+html;
+  setInterval(function(){
+    TICKERS.forEach(function(t){
+      t.price=Math.max(0.0001,t.price*(1+(Math.random()-0.49)*0.0018));
+      t.chg=parseFloat((t.chg+(Math.random()-0.5)*0.08).toFixed(2));
+      var up=t.chg>=0;
+      document.querySelectorAll('[data-ticker="'+t.sym+'-p"]').forEach(function(el){el.textContent=fmtPrice(t.price);});
+      document.querySelectorAll('[data-ticker="'+t.sym+'-c"]').forEach(function(el){
+        el.textContent=(up?'▲':'▼')+' '+Math.abs(t.chg).toFixed(2)+'%';
+        el.className='ti-chg '+(up?'up':'dn');
+      });
+    });
+  }, 3500);
+}
+
+/* ════════════════════════════════════
+   LOGOUT
+════════════════════════════════════ */
+function logout() {
+  localStorage.removeItem('ef_current_user');
+  localStorage.removeItem('ef_current_name');
+  window.location.href='index.html';
+}
+
+/* ════════════════════════════════════
+   BOOT
+════════════════════════════════════ */
+init();
+
+/* ════════════════════════════════════
+   REINVEST MODAL
+════════════════════════════════════ */
+(function() {
+  if (!hasPaidWithdrawal) return;
+  /* Only show once per session — don't nag every page load */
+  var dismissKey = 'ef_reinvest_seen_' + userId;
+  if (sessionStorage.getItem(dismissKey)) return;
+
+  var _totalPaid = paidWds.reduce(function(s,w){ return s+(w.amount||0); }, 0);
+
+  /* Build overlay */
+  var overlay = document.createElement('div');
+  overlay.id = 'reinvest-overlay';
+  overlay.style.cssText = [
+    'position:fixed','inset:0','z-index:9999',
+    'background:rgba(8,8,9,.88)','backdrop-filter:blur(6px)',
+    'display:flex','align-items:center','justify-content:center','padding:20px'
+  ].join(';');
+
+  overlay.innerHTML =
+    '<div style="'
+      +'background:linear-gradient(160deg,#131316 0%,#0f1212 100%);'
+      +'border:1px solid rgba(25,201,138,.25);'
+      +'border-radius:22px;padding:44px 38px;max-width:460px;width:100%;'
+      +'text-align:center;position:relative;'
+      +'box-shadow:0 0 60px rgba(25,201,138,.08),0 24px 60px rgba(0,0,0,.6)'
+    +'">'
+      /* confetti ring */
+      +'<div style="width:72px;height:72px;border-radius:50%;'
+        +'background:linear-gradient(135deg,rgba(25,201,138,.15),rgba(25,201,138,.05));'
+        +'border:1px solid rgba(25,201,138,.3);'
+        +'display:flex;align-items:center;justify-content:center;margin:0 auto 22px;font-size:32px">'
+        +'✅'
+      +'</div>'
+      +'<div style="font-family:\'Montserrat\',sans-serif;font-weight:900;font-size:22px;color:#fff;margin-bottom:10px">Withdrawal Successful</div>'
+      +'<div style="width:36px;height:2px;background:rgba(25,201,138,.4);border-radius:2px;margin:0 auto 18px"></div>'
+      +'<div style="font-size:36px;font-family:\'Montserrat\',sans-serif;font-weight:900;color:#19c98a;margin-bottom:6px">'
+        + fmtLive(_totalPaid)
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--gray);margin-bottom:28px;letter-spacing:.04em;text-transform:uppercase">has been sent to your wallet</div>'
+      +'<div style="font-size:13.5px;color:#b0b3c4;line-height:1.7;margin-bottom:30px">'
+        +'Your EquiFlow portfolio cycle is complete. Your capital — plus every dollar it earned — is now in your hands. '
+        +'<br><br>Ready to put it back to work?'
+      +'</div>'
+      +'<a href="choose-plan.html" style="'
+        +'display:block;padding:15px 24px;'
+        +'background:linear-gradient(135deg,#19c98a,#0fa86e);'
+        +'color:#fff;font-family:\'Montserrat\',sans-serif;font-weight:800;font-size:13px;'
+        +'letter-spacing:.07em;border-radius:12px;text-decoration:none;'
+        +'box-shadow:0 8px 24px rgba(25,201,138,.25);margin-bottom:14px;'
+        +'transition:opacity .2s" onmouseover="this.style.opacity=\'.85\'" onmouseout="this.style.opacity=\'1\'">'
+        +'Start a New Investment Plan →'
+      +'</a>'
+      +'<button onclick="document.getElementById(\'reinvest-overlay\').remove();sessionStorage.setItem(\''+dismissKey+'\',\'1\')" style="'
+        +'background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;'
+        +'padding:6px 12px;font-family:\'Inter\',sans-serif">'
+        +'Maybe later'
+      +'</button>'
+    +'</div>';
+
+  document.body.appendChild(overlay);
+  /* Close on backdrop click */
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) {
+      overlay.remove();
+      sessionStorage.setItem(dismissKey, '1');
+    }
+  });
+})();
+</script>
+</body>
+</html>

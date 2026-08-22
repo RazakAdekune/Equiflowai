@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>EquiFlow | AI Capital Programs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --accent:#ff3340;
+      --gold:#f5a623;
+      --green:#19c98a;
+      --gray:#5a5a60;
+      --gray-2:#9a9a9e;
+    }
+
+    html,body{min-height:100%;background:#050505}
+    body{color:#e2e4ed;font-family:'Inter',system-ui,sans-serif;overflow-x:hidden}
+
+    /* BG */
+    .bg-blob{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .blob{position:absolute;border-radius:50%;filter:blur(130px);opacity:.2}
+    .blob-1{width:700px;height:700px;background:radial-gradient(circle,rgba(255,51,64,.15),transparent 70%);top:-200px;left:-150px}
+    .blob-2{width:500px;height:500px;background:radial-gradient(circle,rgba(245,166,35,.08),transparent 70%);bottom:0;right:-100px}
+    .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:48px 48px}
+
+    /* Topbar */
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(5,5,5,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07);padding:0 32px;height:58px;display:flex;align-items:center;justify-content:space-between}
+    .brand{font-family:'Montserrat',sans-serif;font-weight:900;letter-spacing:.18em;font-size:14px;color:#fff}
+    .brand span{color:var(--accent)}
+    .user-pill{display:flex;align-items:center;gap:10px}
+    .user-av{width:30px;height:30px;border-radius:50%;background:rgba(255,51,64,.12);border:1px solid rgba(255,51,64,.28);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent);font-family:'Montserrat',sans-serif}
+    .user-name{font-size:13px;color:#9ca3af;font-weight:500}
+
+    /* Page */
+    .page{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:52px 24px 90px}
+
+    /* Hero */
+    .hero{text-align:center;margin-bottom:72px}
+    .head-eyebrow{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--gray);margin-bottom:26px}
+    .big-title{font-family:'Montserrat',sans-serif;font-weight:900;text-transform:uppercase;line-height:1;letter-spacing:-.01em;font-size:clamp(38px,5.8vw,80px)}
+    .big-title .w1{color:#fff;display:block}
+    .big-title .w2{color:#3a3a3e;display:block}
+    .lead{max-width:600px;margin:28px auto 0;color:var(--gray);font-size:16px;line-height:1.7}
+
+    /* Plans grid — exact copy from index.html */
+    .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:960px){.plans-grid{grid-template-columns:1fr}}
+
+    .plan{
+      background:#0d0d0f;border-radius:18px;padding:38px 34px 34px;
+      display:flex;flex-direction:column;
+      border:1px solid rgba(255,255,255,.05);
+      transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1),border-color .25s;
+      will-change:transform;
+      opacity:0;transform:translateY(22px);
+      animation:fadeUp .6s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    .plan:nth-child(1){animation-delay:.08s}
+    .plan:nth-child(2){animation-delay:.18s}
+    .plan:nth-child(3){animation-delay:.28s}
+    @keyframes fadeUp{to{opacity:1;transform:none}}
+
+    .plan:hover{border-color:rgba(255,255,255,.14);transform:translateY(-6px);box-shadow:0 28px 64px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08)}
+    .plan h3{font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px;color:#fff;margin-bottom:6px}
+    .plan .cap-range{color:var(--gray);font-size:14px;margin-bottom:28px}
+    .plan .ret-label{font-family:'Montserrat',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#4a4a50;margin-bottom:10px}
+    .plan .ret-num{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(28px,3vw,42px);color:#fff;line-height:1;margin-bottom:14px;letter-spacing:-.02em}
+    .plan .ret-desc{color:#5a5a60;font-size:13.5px;line-height:1.55;margin-bottom:22px}
+    .plan .exec{font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#4a4a50;margin-bottom:22px}
+    .plan .exec b{color:#fff;font-size:14px;letter-spacing:0}
+    .plan .divider{height:1px;background:rgba(255,255,255,.07);margin-bottom:22px}
+    .plan .plan-desc{color:#7a7a80;font-size:14px;line-height:1.65;margin-bottom:22px}
+    .plan ul{list-style:none;margin-bottom:32px}
+    .plan li{position:relative;padding-left:18px;margin-bottom:12px;color:#8a8a90;font-size:14px;line-height:1.5}
+    .plan li::before{content:"•";position:absolute;left:0;top:0;color:var(--accent);font-size:16px;line-height:1.4}
+    .plan .activate-btn{
+      margin-top:auto;display:block;width:100%;padding:17px;text-align:center;
+      font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.14em;
+      text-transform:uppercase;color:#fff;background:#1a1a1e;
+      border:1px solid rgba(255,255,255,.12);border-radius:50px;cursor:pointer;transition:.2s
+    }
+    .plan .activate-btn:hover{background:#252528;border-color:rgba(255,255,255,.25)}
+
+    /* Invest modal */
+    #inv-overlay{
+      display:none;position:fixed;inset:0;z-index:300;
+      background:rgba(0,0,0,.9);backdrop-filter:blur(16px);
+      align-items:center;justify-content:center;padding:20px;
+    }
+    #inv-overlay.show{display:flex;animation:fadeIn .25s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    #inv-box{
+      background:#0d0d0f;border:1px solid rgba(255,255,255,.1);
+      border-radius:22px;padding:38px 34px;width:100%;max-width:480px;
+      animation:cardIn .35s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes cardIn{from{transform:translateY(20px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+
+    .im-header{position:relative;padding-right:32px;margin-bottom:24px}
+    .im-cat{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
+    .im-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:21px;color:#fff;line-height:1.2}
+    .im-close{position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:var(--gray);font-size:26px;line-height:1;transition:color .15s}
+    .im-close:hover{color:#fff}
+
+    .im-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+    .im-stat{padding:13px 15px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+    .im-stat .lbl{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#4b5563;margin-bottom:5px}
+    .im-stat .val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:16px;color:#fff}
+    .im-stat .val.accent{color:var(--accent)}
+
+    .im-field{margin-bottom:14px}
+    .im-field label{display:block;font-size:11px;font-weight:600;color:var(--gray);margin-bottom:7px}
+    .im-input{width:100%;padding:13px 15px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#e2e4ed;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s}
+    .im-input:focus{border-color:var(--accent)}
+
+    .im-est{padding:13px 15px;border-radius:11px;background:rgba(255,51,64,.06);border:1px solid rgba(255,51,64,.15);font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;color:var(--accent);margin-bottom:16px}
+    .im-note{padding:13px 15px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--gray);line-height:1.6;margin-bottom:20px}
+    .im-btn{width:100%;padding:15px;border:none;border-radius:50px;background:#1a1a1e;color:#fff;border:1px solid rgba(255,255,255,.12);font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:.2s}
+    .im-btn:hover{background:#252528;border-color:rgba(255,255,255,.25)}
+
+    /* success */
+    .im-success{text-align:center;padding:10px 0}
+    .im-success-icon{width:68px;height:68px;border-radius:18px;background:rgba(25,201,138,.1);border:1px solid rgba(25,201,138,.25);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px}
+    .im-success h3{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;color:#fff;margin-bottom:10px}
+    .im-success p{font-size:13.5px;color:var(--gray);line-height:1.7;margin-bottom:26px}
+    .im-success-btn{padding:13px 30px;border-radius:50px;background:#1a1a1e;color:#fff;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.15);cursor:pointer;font-family:'Montserrat',sans-serif;letter-spacing:.08em;text-transform:uppercase;transition:.2s}
+    .im-success-btn:hover{background:#252528}
+
+    @media(max-width:600px){
+      .topbar{padding:0 16px}
+      .page{padding:36px 14px 80px}
+      #inv-box{padding:28px 20px}
+      .big-title{font-size:clamp(30px,10vw,52px)}
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blob"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<div class="bg-grid"></div>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="brand">EQUI<span>FLOW</span></div>
+  <div class="user-pill">
+    <div class="user-av" id="user-av">E</div>
+    <span class="user-name" id="user-name-top">Investor</span>
+  </div>
+</header>
+
+<!-- Page -->
+<div class="page">
+
+  <!-- Hero — exact wording from index.html -->
+  <div class="hero">
+    <div class="head-eyebrow">AI Capital Programs</div>
+    <h2 class="big-title">
+      <span class="w1">Structured Strategies</span>
+      <span class="w2">For Different Capital Tiers</span>
+    </h2>
+    <p class="lead">AI-powered systematic trading strategies designed around capital scale, risk tolerance, and execution depth.</p>
+  </div>
+
+  <!-- Plans — exact 3 cards from index.html -->
+  <div class="plans-grid">
+
+    <!-- STARTER AI -->
+    <div class="plan">
+      <h3>Starter AI</h3>
+      <div class="cap-range">$5,000 – $10,000</div>
+      <div class="ret-label">Target Returns</div>
+      <div class="ret-num">300%</div>
+      <div class="ret-desc">Based on historical backtesting and volatility-adjusted strategy modeling.</div>
+      <div class="exec">Execution Cycle: <b>1 week</b></div>
+      <div class="divider"></div>
+      <div class="plan-desc">Designed for new investors seeking structured exposure to innovation-focused equities with automated risk controls.</div>
+      <ul>
+        <li>Automated trade execution</li>
+        <li>Risk-adjusted capital deployment</li>
+      </ul>
+      <button class="activate-btn" onclick="openInvest('Starter AI','300%',5000,10000,'1 week')">Activate Starter AI</button>
+    </div>
+
+    <!-- GROWTH AI -->
+    <div class="plan">
+      <h3>Growth AI</h3>
+      <div class="cap-range">$10,000 – $50,000</div>
+      <div class="ret-label">Target Returns</div>
+      <div class="ret-num">450%</div>
+      <div class="ret-desc">Advanced signal detection with volatility-aware execution framework.</div>
+      <div class="exec">Execution Cycle: <b>2 weeks</b></div>
+      <div class="divider"></div>
+      <div class="plan-desc">Enhanced AI signal modeling focused on high-growth innovation sectors and dynamic capital rotation.</div>
+      <ul>
+        <li>High-frequency signal detection</li>
+        <li>Sector rotation strategy</li>
+        <li>Volatility hedging logic</li>
+        <li>Weekly analytics dashboard</li>
+      </ul>
+      <button class="activate-btn" onclick="openInvest('Growth AI','450%',10000,50000,'2 weeks')">Activate Growth AI</button>
+    </div>
+
+    <!-- ELITE AI -->
+    <div class="plan">
+      <h3>Elite AI</h3>
+      <div class="cap-range">$50,000 – $100,000+</div>
+      <div class="ret-label">Target Returns</div>
+      <div class="ret-num">+700%</div>
+      <div class="ret-desc">Multi-layered AI execution across diversified innovation assets.</div>
+      <div class="exec">Execution Cycle: <b>4 weeks</b></div>
+      <div class="divider"></div>
+      <div class="plan-desc">Designed for large capital deployment with structured downside protection and dynamic reallocation systems.</div>
+      <ul>
+        <li>Cross-sector AI allocation engine</li>
+        <li>Downside risk containment protocol</li>
+        <li>Real-time capital rebalancing</li>
+        <li>Dedicated strategy oversight</li>
+      </ul>
+      <button class="activate-btn" onclick="openInvest('Elite AI','+700%',50000,null,'4 weeks')">Activate Elite AI</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Invest modal -->
+<div id="inv-overlay" onclick="if(event.target===this)closeInvest()">
+  <div id="inv-box"><!-- filled by JS --></div>
+</div>
+
+<script>
+  /* session guard */
+  if (!localStorage.getItem('ef_current_user')) { window.location.href = 'index.html'; }
+
+  /* personalise topbar */
+  var userName = localStorage.getItem('ef_current_name') || 'Investor';
+  document.getElementById('user-name-top').textContent = userName.split(' ')[0];
+  document.getElementById('user-av').textContent = userName.charAt(0).toUpperCase();
+
+  var _plan = null;
+
+  function openInvest(name, returns, minAmt, maxAmt, cycle) {
+    _plan = { name:name, returns:returns, minAmt:minAmt, maxAmt:maxAmt, cycle:cycle };
+    var maxStr = maxAmt ? '$'+maxAmt.toLocaleString() : '$100,000+';
+
+    document.getElementById('inv-box').innerHTML =
+      '<div class="im-header">'
+        + '<div class="im-cat">AI Capital Program</div>'
+        + '<div class="im-title">'+name+'</div>'
+        + '<button class="im-close" onclick="closeInvest()">×</button>'
+      + '</div>'
+      + '<div class="im-grid">'
+        + '<div class="im-stat"><div class="lbl">Target Returns</div><div class="val accent">'+returns+'</div></div>'
+        + '<div class="im-stat"><div class="lbl">Execution Cycle</div><div class="val">'+cycle+'</div></div>'
+        + '<div class="im-stat"><div class="lbl">Min. Capital</div><div class="val">$'+minAmt.toLocaleString()+'</div></div>'
+        + '<div class="im-stat"><div class="lbl">Max. Capital</div><div class="val">'+maxStr+'</div></div>'
+      + '</div>'
+      + '<div class="im-field"><label>Investment Amount (USD)</label>'
+        + '<input class="im-input" id="inv-amt" type="number" min="'+minAmt+'" placeholder="Min $'+minAmt.toLocaleString()+'" oninput="calcReturn('+minAmt+')">'
+      + '</div>'
+      + '<div class="im-est" id="inv-est">Enter amount above</div>'
+      + '<div class="im-note"><strong style="color:#fff">Next step:</strong> Confirm your allocation below — you\'ll be taken directly to the payment page to complete your deposit and activate your strategy instantly.</div>'
+      + '<button class="im-btn" onclick="submitInterest()">Activate '+name+' →</button>';
+
+    document.getElementById('inv-overlay').classList.add('show');
+    setTimeout(function(){ var el=document.getElementById('inv-amt'); if(el) el.focus(); }, 100);
+  }
+
+  function calcReturn(min) {
+    var amt = parseFloat(document.getElementById('inv-amt').value || 0);
+    var el  = document.getElementById('inv-est');
+    if (!el || !_plan) return;
+    if (amt >= min) {
+      /* use lower bound of return range as conservative estimate */
+      var lowPct  = _plan.name === 'Starter AI' ? 3.0 : _plan.name === 'Growth AI' ? 4.5 : 7.0;
+      var highPct = _plan.name === 'Starter AI' ? 3.0 : _plan.name === 'Growth AI' ? 4.5 : 9.0;
+      var low  = (amt * lowPct).toLocaleString(undefined,{maximumFractionDigits:0});
+      var high = (amt * highPct).toLocaleString(undefined,{maximumFractionDigits:0});
+      el.textContent = 'Est. return: $'+low+' – $'+high+' ('+_plan.cycle+' cycle)';
+      el.style.color = '#ff3340';
+    } else {
+      el.textContent = amt > 0 ? 'Minimum is $'+min.toLocaleString() : 'Enter amount above';
+      el.style.color = amt > 0 ? '#6b7280' : '#ff3340';
+    }
+  }
+
+  async function submitInterest() {
+    if (!_plan) return;
+    var amt = parseFloat(document.getElementById('inv-amt') && document.getElementById('inv-amt').value || 0);
+    if (amt < _plan.minAmt) {
+      var inp = document.getElementById('inv-amt');
+      if (inp){ inp.style.borderColor='#ff3340'; inp.focus(); }
+      return;
+    }
+    /* save pending deposit and redirect */
+    try {
+      localStorage.setItem('ef_pending_deposit', JSON.stringify({
+        plan: _plan.name + ' — AI Capital Program',
+        amount: amt,
+        type: 'ai-program'
+      }));
+    } catch(e){}
+    var uid = localStorage.getItem('ef_current_user');
+    if (uid) { await dbAddOppInterest(uid, _plan.name + ' — AI Capital Program'); }
+    window.location.href = 'deposit.html';
+  }
+
+  function closeInvest() {
+    document.getElementById('inv-overlay').classList.remove('show');
+    _plan = null;
+  }
+
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeInvest(); });
+
+  /* ── FOMO WIDGET ── */
+  (function(){
+    var NAMES = [
+      'Tyler M.','Ashley R.','Brandon K.','Jessica L.','Chad W.','Brittany H.',
+      'Kyle T.','Megan S.','Travis B.','Kayla N.','Cody J.','Amber G.',
+      'Derek F.','Tiffany C.','Justin P.','Stephanie D.','Blake A.','Lindsay O.',
+      'Garrett E.','Samantha V.','Ryan Q.','Heather Z.','Connor I.','Chelsea U.'
+    ];
+
+    /* Proportional to each AI tier's capital range — Growth & Elite weighted heavier */
+    var PROGRAMS = [
+      { label:'Starter AI Program',  min:5000,   max:10000  },
+      { label:'Growth AI Program',   min:10000,  max:20000  },
+      { label:'Growth AI Program',   min:15000,  max:35000  },
+      { label:'Growth AI Program',   min:20000,  max:50000  },
+      { label:'Growth AI Program',   min:12000,  max:45000  },
+      { label:'Growth AI Program',   min:18000,  max:50000  },
+      { label:'Elite AI Program',    min:50000,  max:80000  },
+      { label:'Elite AI Program',    min:75000,  max:150000 },
+      { label:'Elite AI Program',    min:100000, max:200000 },
+      { label:'Elite AI Program',    min:60000,  max:120000 }
+    ];
+
+    var ACTIONS = ['invested', 'invested', 'invested', 'withdrew'];
+
+    function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function randFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function niceAmt(min, max){
+      var raw  = rand(min, max);
+      var step = raw >= 50000 ? 5000 : raw >= 10000 ? 1000 : 500;
+      return Math.round(raw/step)*step;
+    }
+
+    function minsAgo(){ return rand(1,9)+' min ago'; }
+
+    function buildFomo(){
+      var name    = randFrom(NAMES);
+      var program = randFrom(PROGRAMS);
+      var action  = randFrom(ACTIONS);
+      var amt     = niceAmt(program.min, program.max).toLocaleString();
+      var icon    = action === 'invested' ? '🤖' : '💸';
+      var color   = action === 'invested' ? '#19c98a' : '#ff3340';
+      var verb    = action === 'invested' ? 'invested' : 'withdrew';
+
+      return '<div style="display:flex;align-items:center;gap:12px">'
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:12.5px;font-weight:700;color:#e2e4ed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:#fff">'+name+'</span> '+verb+' <span style="color:'+color+';font-family:Montserrat,sans-serif;font-weight:800">$'+amt+'</span></div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+program.label+'</div>'
+        + '</div>'
+        + '<div style="font-size:10px;color:#4b5563;flex-shrink:0">'+minsAgo()+'</div>'
+        + '</div>';
+    }
+
+    var box = document.createElement('div');
+    box.id  = 'fomo-box';
+    box.style.cssText = [
+      'position:fixed','top:72px','right:20px','z-index:400',
+      'background:#111114','border:1px solid rgba(255,255,255,.1)',
+      'border-radius:14px','padding:14px 16px','width:310px',
+      'box-shadow:0 12px 40px rgba(0,0,0,.6)',
+      'transform:translateX(340px)','transition:transform .45s cubic-bezier(.22,1,.36,1)',
+      'cursor:default','user-select:none'
+    ].join(';');
+    document.body.appendChild(box);
+
+    function show(){
+      box.innerHTML = buildFomo();
+      box.style.transform = 'translateX(0)';
+      setTimeout(hide, 4000);
+    }
+    function hide(){
+      box.style.transform = 'translateX(340px)';
+    }
+
+    setTimeout(function(){
+      show();
+      setInterval(show, 12000);
+    }, 4000);
+
+    function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  })();
+</script>
+</body>
+</html>
